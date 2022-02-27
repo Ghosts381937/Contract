@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.0 <0.9.0;
 contract U_game{
@@ -13,8 +12,8 @@ contract U_game{
         player[msg.sender].player_site = 1;
     }
 
-    function readSite() external view returns(uint8){
-        return player[msg.sender].player_site;
+    function readSite(address _player) external view returns(uint8){
+        return player[_player].player_site;
     }
 
     function moveSite(uint8 NextSite) external {
