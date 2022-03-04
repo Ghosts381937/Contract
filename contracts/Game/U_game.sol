@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.0 <0.9.0;
-interface getRandom{
-    function random_value(uint) external view returns(uint);
-}
 contract U_game{
-    address private randomAddr;
-    constructor(){
-        randomAddr = 0xdEF6848f1bcaC8810bE96815175Ead4aCc1fd484;
+    struct Map{
+        uint quantityOfEnemy;
     }
     struct Player{
         uint8 player_site;
         bool isInited;
+    }
+    Map[10] public map;
+    constructor(){
+        map[2].quantityOfEnemy = 2;
+        map[3].quantityOfEnemy = 3;
+        map[4].quantityOfEnemy = 4;
+        map[5].quantityOfEnemy = 5;
+        map[6].quantityOfEnemy = 6;
+        map[7].quantityOfEnemy = 7;
+        map[8].quantityOfEnemy = 8;
+        map[9].quantityOfEnemy = 9;
     }
     mapping (address => Player) private player;
 
@@ -23,14 +30,19 @@ contract U_game{
         return player[_player].player_site;
     }
 
-    function moveSite(uint8 NextSite) external {
-        player[msg.sender].player_site = NextSite;
+    function moveSite(uint8 _NextSite) external {
+        require(_NextSite >= 2 && _NextSite <= 10, "Your input nextsite is unreasonable!");
+        player[msg.sender].player_site = _NextSite;
     }
 
-    function entityOperation() external {
-
+    function killEnemy(uint _index, uint _quantityOfEnemy) external{
+        require(_index >= 2 && _index <= 9, "Your input index is unreasonable!");
+        require(_quantityOfEnemy >= 1, "Your input quantityOfEnemy is unreasonable!");
+        require(_quantityOfEnemy <= map[_index].quantityOfEnemy, "Your input quantityOfEnemy is out of range!");
+        map[_index].quantityOfEnemy -= _quantityOfEnemy;
     }
-    function get_random(uint seed) private view returns(uint){
-        return getRandom(randomAddr).random_value(seed);
+    function random_value(uint _seed) internal view returns(uint){
+        uint seed_temp =  uint(keccak256(abi.encodePacked(blockhash(block.number - 1), _seed)));
+        return seed_temp;
     }
 }
