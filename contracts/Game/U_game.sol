@@ -22,7 +22,7 @@ contract U_game{
     }
     function initPlayer() external {
         require(player[msg.sender].isInited == false, "You had been inited!");
-        player[msg.sender].player_site = 1;
+        player[msg.sender].player_site = 2;
     }
     function readSite(address _player) external view returns(uint256){
         return player[_player].player_site;
