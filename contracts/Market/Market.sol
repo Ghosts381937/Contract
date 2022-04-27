@@ -12,46 +12,37 @@ interface _ERC20{
     function transfer(address to, uint256 amount) external;
 }
 contract Market{
-    address AddrERC721 = 0x0fC5025C764cE34df352757e82f7B5c4Df39A836;
-    address AddrERC20 = 0xb27A31f1b0AF2946B7F582768f03239b1eC07c2c;
+    address addrERC20;
+    address addrERC721;
+    constructor(address _addrERC20, address _addrERC721){
+        addrERC20 = _addrERC20;
+        addrERC721 = _addrERC721;
+    }
     struct Product{
         uint256 ProductTokenId;
         address ProductOwner;
-        uint256 ProductDollar;
+        uint256 ProductPrice;
     }
     Product[] private ProductList;
-    function setOnProductList(uint256 _tokenId, uint256 _dollar) internal{
+    function appendProduct(uint256 _tokenId, uint256 _dollar) internal{
         Product memory temp;
         temp.ProductTokenId = _tokenId;
         temp.ProductOwner = msg.sender;
-        temp.ProductDollar = _dollar;
+        temp.ProductPrice = _dollar;
         ProductList.push(temp);
     }
-    function deleteProductList(uint256 _index) internal{
+    function deleteProduct(uint256 _index) internal{
         uint256 Arraylength = ProductList.length;
         require(Arraylength > _index, "Out of bounds!!!");
         ProductList[_index].ProductTokenId =  ProductList[Arraylength-1].ProductTokenId;
         ProductList[_index].ProductOwner =  ProductList[Arraylength-1].ProductOwner; 
-        ProductList[_index].ProductDollar =  ProductList[Arraylength-1].ProductDollar;
+        ProductList[_index].ProductPrice =  ProductList[Arraylength-1].ProductPrice;
         ProductList.pop(); 
     }
-    function getOnProductList(uint256 _tokenId) internal view returns(uint256){
-        for(uint256 i = 0; i < ProductList.length; i++){
-            if(ProductList[i].ProductTokenId == _tokenId)
-                return ProductList[i].ProductDollar;
-        }
-        revert("Not found the _tokenId");
-    }
-    function getOnProductListOwner(uint256 _tokenId) internal view returns(address){
-        for(uint256 i = 0; i < ProductList.length; i++){
-            if(ProductList[i].ProductTokenId == _tokenId)
-                return ProductList[i].ProductOwner;
-        }
-        revert("Not found the _tokenId");
-    }
-    function getOnProductListNumber(uint256 _tokenId) internal view returns(uint256){
-        for(uint256 i = 0; i < ProductList.length; i++){
-            if(ProductList[i].ProductTokenId == _tokenId)
+    function getIndexOfProduct(uint256 _tokenId) internal view returns(uint256){
+        Product[] memory temp = ProductList;
+        for(uint256 i = 0; i < temp.length; i++){
+            if(temp[i].ProductTokenId == _tokenId)
                 return i;
         }
         revert("Not found the _tokenId");
@@ -60,22 +51,22 @@ contract Market{
         return ProductList;
     }
     function appendItems(uint256 _tokenId, uint256 _dollar) external{
-        _ERC721(AddrERC721).transferFrom(msg.sender, address(this), _tokenId);
-        setOnProductList(_tokenId, _dollar);
+        _ERC721(addrERC721).transferFrom(msg.sender, address(this), _tokenId);
+        appendProduct(_tokenId, _dollar);
     }
     function deleteItems(uint256 _tokenId) external{
-        uint256 index = getOnProductListNumber(_tokenId);
-        require(getOnProductListOwner(_tokenId) == msg.sender, "You aren't the owner!!!");
-        _ERC721(AddrERC721).transferFrom(address(this), msg.sender, _tokenId);
-        deleteProductList(index);
+        Product[] memory temp = ProductList;
+        uint256 index = getIndexOfProduct(_tokenId);
+        require(temp[index].ProductOwner == msg.sender, "You aren't the owner!!!");
+        _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
+        deleteProduct(index);
     }
     function purchaseItems(uint256 _tokenId) external{
-        uint256 cost = getOnProductList(_tokenId);
-        _ERC20(AddrERC20).transferFrom(msg.sender, address(this), cost);
-        _ERC721(AddrERC721).transferFrom(address(this), msg.sender, _tokenId);
-        address seller = getOnProductListOwner(_tokenId);
-        _ERC20(AddrERC20).transfer(seller, cost);
-        uint256 index = getOnProductListNumber(_tokenId);
-       deleteProductList(index);
+        Product[] memory temp = ProductList;
+        uint256 index = getIndexOfProduct(_tokenId);
+        _ERC20(addrERC20).transferFrom(msg.sender, address(this), temp[index].ProductPrice);
+        _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
+        _ERC20(addrERC20).transfer(temp[index].ProductOwner, temp[index].ProductPrice);
+        deleteProduct(index);
     }
 }
