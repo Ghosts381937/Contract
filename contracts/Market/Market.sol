@@ -23,22 +23,22 @@ contract Market{
         address productOwner;
         uint256 productPrice;
     }
-    Product[] private ProductList;
+    Product[] private productList;
     function appendProduct(uint256 _tokenId, uint256 _dollar) internal{
         Product memory temp;
         temp.productTokenId = _tokenId;
         temp.productOwner = msg.sender;
         temp.productPrice = _dollar;
-        ProductList.push(temp);
+        productList.push(temp);
     }
     function deleteProduct(uint256 _index) internal{
-        uint256 arraylength = ProductList.length;
+        uint256 arraylength = productList.length;
         require(arraylength > _index, "Out of bounds!!!");
-        ProductList[_index] =  ProductList[arraylength-1];
-        ProductList.pop(); 
+        productList[_index] =  productList[arraylength-1];
+        productList.pop(); 
     }
     function getIndexOfProduct(uint256 _tokenId) internal view returns(uint256){
-        Product[] memory temp = ProductList;
+        Product[] memory temp = productList;
         for(uint256 i = 0; i < temp.length; i++){
             if(temp[i].productTokenId == _tokenId)
                 return i;
@@ -46,7 +46,7 @@ contract Market{
         revert("Not found the _tokenId");
     }
     function itemsList() external view returns(Product[] memory){
-        return ProductList;
+        return productList;
     }
     function appendItems(uint256 _tokenId, uint256 _dollar) external{
         _ERC721(addrERC721).transferFrom(msg.sender, address(this), _tokenId);
@@ -54,13 +54,13 @@ contract Market{
     }
     function deleteItems(uint256 _tokenId) external{
         uint256 index = getIndexOfProduct(_tokenId);
-        require(ProductList[index].productOwner == msg.sender, "You aren't the owner!!!");
+        require(productList[index].productOwner == msg.sender, "You aren't the owner!!!");
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
         deleteProduct(index);
     }
     function purchaseItems(uint256 _tokenId) external{ 
         uint256 index = getIndexOfProduct(_tokenId);
-        Product memory temp = ProductList[index];
+        Product memory temp = productList[index];
         _ERC20(addrERC20).transferFrom(msg.sender, address(this), temp.productPrice);
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
         _ERC20(addrERC20).transfer(temp.productOwner, temp.productPrice);
