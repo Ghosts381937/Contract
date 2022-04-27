@@ -19,30 +19,28 @@ contract Market{
         addrERC721 = _addrERC721;
     }
     struct Product{
-        uint256 ProductTokenId;
-        address ProductOwner;
-        uint256 ProductPrice;
+        uint256 productTokenId;
+        address productOwner;
+        uint256 productPrice;
     }
     Product[] private ProductList;
     function appendProduct(uint256 _tokenId, uint256 _dollar) internal{
         Product memory temp;
-        temp.ProductTokenId = _tokenId;
-        temp.ProductOwner = msg.sender;
-        temp.ProductPrice = _dollar;
+        temp.productTokenId = _tokenId;
+        temp.productOwner = msg.sender;
+        temp.productPrice = _dollar;
         ProductList.push(temp);
     }
     function deleteProduct(uint256 _index) internal{
-        uint256 Arraylength = ProductList.length;
-        require(Arraylength > _index, "Out of bounds!!!");
-        ProductList[_index].ProductTokenId =  ProductList[Arraylength-1].ProductTokenId;
-        ProductList[_index].ProductOwner =  ProductList[Arraylength-1].ProductOwner; 
-        ProductList[_index].ProductPrice =  ProductList[Arraylength-1].ProductPrice;
+        uint256 arraylength = ProductList.length;
+        require(arraylength > _index, "Out of bounds!!!");
+        ProductList[_index] =  ProductList[arraylength-1];
         ProductList.pop(); 
     }
     function getIndexOfProduct(uint256 _tokenId) internal view returns(uint256){
         Product[] memory temp = ProductList;
         for(uint256 i = 0; i < temp.length; i++){
-            if(temp[i].ProductTokenId == _tokenId)
+            if(temp[i].productTokenId == _tokenId)
                 return i;
         }
         revert("Not found the _tokenId");
@@ -55,18 +53,17 @@ contract Market{
         appendProduct(_tokenId, _dollar);
     }
     function deleteItems(uint256 _tokenId) external{
-        Product[] memory temp = ProductList;
         uint256 index = getIndexOfProduct(_tokenId);
-        require(temp[index].ProductOwner == msg.sender, "You aren't the owner!!!");
+        require(ProductList[index].productOwner == msg.sender, "You aren't the owner!!!");
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
         deleteProduct(index);
     }
-    function purchaseItems(uint256 _tokenId) external{
-        Product[] memory temp = ProductList;
+    function purchaseItems(uint256 _tokenId) external{ 
         uint256 index = getIndexOfProduct(_tokenId);
-        _ERC20(addrERC20).transferFrom(msg.sender, address(this), temp[index].ProductPrice);
+        Product memory temp = ProductList[index];
+        _ERC20(addrERC20).transferFrom(msg.sender, address(this), temp.productPrice);
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
-        _ERC20(addrERC20).transfer(temp[index].ProductOwner, temp[index].ProductPrice);
+        _ERC20(addrERC20).transfer(temp.productOwner, temp.productPrice);
         deleteProduct(index);
     }
 }
