@@ -48,20 +48,33 @@ contract Major {
         return isInit[_account];
     }
 
-    function equipmentOf(address _account) external view returns(Equipment memory) {
-        return equipment[_account];
+    function equipmentOf(address _account) external view returns(uint helmet, uint chestplate, uint leggings, uint boots, uint weapon) {
+        Equipment memory _equipment = equipment[_account];
+        helmet = _equipment.helmet;
+        chestplate = _equipment.chestplate;
+        leggings = _equipment.leggings;
+        boots = _equipment.boots;
+        weapon = _equipment.weapon;
     }
 
-    function skillOf(address _account) external view returns(uint8[NUMBERS_OF_SKILL] memory) {
-        return skill[_account];
+    function skillOf(address _account) external view returns(uint8[NUMBERS_OF_SKILL] memory skills) {
+        skills = skill[_account];
     }
 
-    function playerStatusOf(address _account) external view returns(PlayerStatus memory) {
-        return playerStatus[_account];
+    function playerStatusOf(address _account) external view returns(string memory name, uint8 carrer, uint siteOfDungeon, uint timestamp) {
+        PlayerStatus memory _playerStatus = playerStatus[_account];
+        name = _playerStatus.name;
+        carrer = _playerStatus.carrer;
+        siteOfDungeon = _playerStatus.siteOfDungeon;
+        timestamp = _playerStatus.timestamp;
     }
 
-    function abilityOf(address _account) external view returns(Ability memory) {
-        return ability[_account];
+    function abilityOf(address _account) external view returns(uint str, uint intllegence, uint dex, uint luk) {
+        Ability memory _ability = ability[_account];
+        str = _ability.str;
+        intllegence = _ability.intllegence;
+        dex = _ability.dex;
+        luk = _ability.luk;
     }
 
     function init(string memory _name, uint8 _carrer) external {
@@ -96,5 +109,6 @@ contract Major {
     function _updateEquipment(Equipment memory _equipment) internal {
         equipment[msg.sender] = _equipment;
     }
+
 
 }
