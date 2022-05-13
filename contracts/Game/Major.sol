@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.0 <0.9.0;
+interface ERC20{
+    function transferFrom(address from, address to, uint256 amount) external;
+    function transfer(address to, uint256 amount) external;
+}
 contract Major {
-
+    address owner;
     uint8 constant NUMBERS_OF_SKILL = 8;
+    ERC20 constant TOKEN = ERC20(0xb27A31f1b0AF2946B7F582768f03239b1eC07c2c);
     struct Ability {
         uint str;
         uint intllegence;
@@ -27,10 +32,10 @@ contract Major {
     }
     struct Dungeon {
         uint cost;
-        uint[] typesOfEnemy;
-        uint[] numbersOfRemaingEnemy;
-        uint[] typesOfTreasure;
-        uint[] numbersOfRemaingTreasure;
+        uint8[] typesOfEnemy;
+        uint8[] numbersOfRemaingEnemy;
+        uint8[] typesOfTreasure;
+        uint8[] numbersOfRemaingTreasure;
     }
     struct DropsInfo {
         uint[] typesOfMaterial;
@@ -46,6 +51,16 @@ contract Major {
     mapping(address => uint8[NUMBERS_OF_SKILL]) private skill;
     mapping(address => Equipment) private equipment;
     mapping(address => PlayerStatus) private playerStatus;
+    Dungeon[] private dungeon;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Permission denied.");
+        _;
+    }
 
     function isInited(address _account) public view returns(bool) {
         return isInit[_account];
@@ -90,6 +105,14 @@ contract Major {
         _updateEquipment(Equipment(1, 2, 3, 4, 10));
         uint8[NUMBERS_OF_SKILL] memory _skill = [1, 0, 1, 1, 0, 1, 0, 0];
         _updateSkill(_skill);
+    }
+
+    function enterDungeon(uint _indexOfDungeon, uint[] memory _itemId) external {
+
+    }
+
+    function createDungeon(uint _cost, uint8[] memory _typesOfEnemy, uint8[] memory _numbersOfEnemy, uint8[] memory _typesOfTreasure, uint8[] memory _numbersOfTreasure) external onlyOwner {
+        dungeon.push(Dungeon(_cost, _typesOfEnemy, _numbersOfEnemy, _typesOfTreasure, _numbersOfTreasure));
     }
     
     function _random(uint256 _seed) internal view returns(uint){
