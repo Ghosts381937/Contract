@@ -7,6 +7,7 @@ contract Major {
         uint str;
         uint intllegence;
         uint dex;
+        uint vit;
         uint luk;
     }
     struct Equipment {
@@ -18,7 +19,9 @@ contract Major {
     }
     struct PlayerStatus {
         string name;
-        uint8 carrer;
+        uint8 level;
+        uint experience;
+        uint distributableAbility;
         uint siteOfDungeon;
         uint timestamp;
     }
@@ -61,12 +64,12 @@ contract Major {
         skills = skill[_account];
     }
 
-    function playerStatusOf(address _account) external view returns(string memory name, uint8 carrer, uint siteOfDungeon, uint timestamp) {
+    function playerStatusOf(address _account) external view returns(string memory name, uint8 level, uint experience, uint distributableAbility) {
         PlayerStatus memory _playerStatus = playerStatus[_account];
         name = _playerStatus.name;
-        carrer = _playerStatus.carrer;
-        siteOfDungeon = _playerStatus.siteOfDungeon;
-        timestamp = _playerStatus.timestamp;
+        level = _playerStatus.level;
+        experience = _playerStatus.experience;
+        distributableAbility = _playerStatus.distributableAbility;
     }
 
     function abilityOf(address _account) external view returns(uint str, uint intllegence, uint dex, uint luk) {
@@ -77,11 +80,11 @@ contract Major {
         luk = _ability.luk;
     }
 
-    function init(string memory _name, uint8 _carrer) external {
+    function init(string memory _name) external {
         require(isInited(msg.sender) == false, "The account had been inited");
         isInit[msg.sender] = true;
-        _updatePlayerStatus(PlayerStatus(_name, _carrer, 0, 0));
-        _updateAbility(Ability(10, 10, 10, 10));
+        _updatePlayerStatus(PlayerStatus(_name, 0, 0, 0, 0, 0));
+        _updateAbility(Ability(10, 10, 10, 10, 10));
 
         //test statement
         _updateEquipment(Equipment(1, 2, 3, 4, 10));
