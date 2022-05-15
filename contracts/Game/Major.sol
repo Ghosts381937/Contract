@@ -34,8 +34,12 @@ contract Major {
         uint cost;
         uint8[] typesOfEnemy;
         uint8[] numbersOfRemaingEnemy;
+        uint8[] numbersOfOriginEnemy;
+        uint8[] numbersOfEnemyOnSingleDungeon;
         uint8[] typesOfTreasure;
         uint8[] numbersOfRemaingTreasure;
+        uint8[] numbersOfOriginTreasure;
+        uint8[] maxNumbersOfTreasureOnSingleDungeon;
     }
     struct DropsInfo {
         uint[] typesOfMaterial;
@@ -52,9 +56,12 @@ contract Major {
     mapping(address => Equipment) private equipment;
     mapping(address => PlayerStatus) private playerStatus;
     Dungeon[] private dungeon;
+    uint8 private dungeonSize = 0;
+    uint private timestamp;
 
     constructor() {
         owner = msg.sender;
+        timestamp = block.timestamp;
     }
 
     modifier onlyOwner() {
@@ -107,12 +114,23 @@ contract Major {
         _updateSkill(_skill);
     }
 
-    function enterDungeon(uint _indexOfDungeon, uint[] memory _itemId) external {
+    function enterDungeon(uint _indexOfDungeon) external {
+        require(_indexOfDungeon < dungeonSize, "Size Limit Exceeded");
+        Dungeon memory _dungeon = dungeon[_indexOfDungeon];
 
+        if(block.timestamp >= timestamp + 12 hours) {//reset the content of dungeon for each 12 hours
+            _dungeon.numbersOfRemaingEnemy = _dungeon.numbersOfOriginEnemy;
+            _dungeon.numbersOfRemaingTreasure = _dungeon.numbersOfOriginTreasure;
+        }
+
+        require(_dungeon.numbersOfRemaingEnemy[0] >= _dungeon.numbersOfEnemyOnSingleDungeon[0], "Not Enough Enemy");
+        TOKEN.transferFrom(msg.sender, address(this), _dungeon.cost);
+    
     }
 
-    function createDungeon(uint _cost, uint8[] memory _typesOfEnemy, uint8[] memory _numbersOfEnemy, uint8[] memory _typesOfTreasure, uint8[] memory _numbersOfTreasure) external onlyOwner {
-        dungeon.push(Dungeon(_cost, _typesOfEnemy, _numbersOfEnemy, _typesOfTreasure, _numbersOfTreasure));
+    function createDungeon(uint _cost, uint8[] memory _typesOfEnemy, uint8[] memory _numbersOfOriginEnemy, uint8[] memory _numbersOfEnemyOnSingleDungeon, uint8[] memory _typesOfTreasure, uint8[] memory _numbersOfOriginTreasure, uint8[] memory _maxNumbersOfTreasureOnSingleDungeon) external onlyOwner {
+        dungeon.push(Dungeon(_cost, _typesOfEnemy, _numbersOfOriginEnemy, _numbersOfOriginEnemy, _numbersOfEnemyOnSingleDungeon, _typesOfTreasure, _numbersOfOriginTreasure, _numbersOfOriginTreasure, _numbersOfOriginTreasure));
+        dungeonSize++;
     }
     
     function _random(uint256 _seed) internal view returns(uint){
