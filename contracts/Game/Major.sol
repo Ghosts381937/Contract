@@ -121,6 +121,7 @@ contract Major {
         if(block.timestamp >= timestamp + 12 hours) {//reset the content of dungeon for each 12 hours
             _dungeon.numbersOfRemaingEnemy = _dungeon.numbersOfOriginEnemy;
             _dungeon.numbersOfRemaingTreasure = _dungeon.numbersOfOriginTreasure;
+            dungeon[_indexOfDungeon] = _dungeon;
         }
 
         require(_dungeon.numbersOfRemaingEnemy[0] >= _dungeon.numbersOfEnemyOnSingleDungeon[0], "Not Enough Enemy");
