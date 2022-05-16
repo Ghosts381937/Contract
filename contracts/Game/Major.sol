@@ -4,10 +4,15 @@ interface ERC20{
     function transferFrom(address from, address to, uint256 amount) external;
     function transfer(address to, uint256 amount) external;
 }
+/**
+   * @title Major
+   * @dev Game contract
+   * @custom:dev-run-script browser/scripts/deploy_web3.js
+    */
 contract Major {
     address owner;
     uint8 constant NUMBERS_OF_SKILL = 8;
-    ERC20 constant TOKEN = ERC20(0xb27A31f1b0AF2946B7F582768f03239b1eC07c2c);
+    ERC20 TOKEN;
     struct Ability {
         uint str;
         uint intllegence;
@@ -32,14 +37,9 @@ contract Major {
     }
     struct Dungeon {
         uint cost;
-        uint8[] typesOfEnemy;
         uint8[] numbersOfRemaingEnemy;
         uint8[] numbersOfOriginEnemy;
         uint8[] numbersOfEnemyOnSingleDungeon;
-        uint8[] typesOfTreasure;
-        uint8[] numbersOfRemaingTreasure;
-        uint8[] numbersOfOriginTreasure;
-        uint8[] maxNumbersOfTreasureOnSingleDungeon;
     }
     struct DropsInfo {
         uint[] typesOfMaterial;
@@ -56,10 +56,12 @@ contract Major {
     mapping(address => Equipment) private equipment;
     mapping(address => PlayerStatus) private playerStatus;
     Dungeon[] private dungeon;
-    uint8 private dungeonSize = 0;
+    uint8 public dungeonSize = 0;
     uint private timestamp;
+    uint private interval = 30 seconds;//30 seconds for testing
 
-    constructor() {
+    constructor(address _erc20) {
+        TOKEN = ERC20(_erc20);
         owner = msg.sender;
         timestamp = block.timestamp;
     }
@@ -94,12 +96,21 @@ contract Major {
         distributableAbility = _playerStatus.distributableAbility;
     }
 
-    function abilityOf(address _account) external view returns(uint str, uint intllegence, uint dex, uint luk) {
+    function abilityOf(address _account) external view returns(uint str, uint intllegence, uint dex,uint vit, uint luk) {
         Ability memory _ability = ability[_account];
         str = _ability.str;
         intllegence = _ability.intllegence;
         dex = _ability.dex;
+        vit = _ability.vit;
         luk = _ability.luk;
+    }
+
+    function dungeonOf(uint _indexOfDungeon) external view returns(uint cost, uint8[] memory numbersOfRemaingEnemy, uint8[] memory numbersOfOriginEnemy, uint8[] memory numbersOfEnemyOnSingleDungeon) {
+        Dungeon memory _dungeon = dungeon[_indexOfDungeon];
+        cost = _dungeon.cost;
+        numbersOfRemaingEnemy = _dungeon.numbersOfRemaingEnemy;
+        numbersOfOriginEnemy = _dungeon.numbersOfOriginEnemy;
+        numbersOfEnemyOnSingleDungeon = _dungeon.numbersOfEnemyOnSingleDungeon;
     }
 
     function init(string memory _name) external {
@@ -115,24 +126,46 @@ contract Major {
     }
 
     function enterDungeon(uint _indexOfDungeon) external {
+        //boundary check
         require(_indexOfDungeon < dungeonSize, "Size Limit Exceeded");
-        Dungeon memory _dungeon = dungeon[_indexOfDungeon];
 
-        if(block.timestamp >= timestamp + 12 hours) {//reset the content of dungeon for each 12 hours
-            _dungeon.numbersOfRemaingEnemy = _dungeon.numbersOfOriginEnemy;
-            _dungeon.numbersOfRemaingTreasure = _dungeon.numbersOfOriginTreasure;
-            dungeon[_indexOfDungeon] = _dungeon;
+        Dungeon memory _dungeon = dungeon[_indexOfDungeon];
+        PlayerStatus memory _playerStatus = playerStatus[msg.sender];
+        uint currentTime = block.timestamp;
+
+        //reset the content of dungeon for each 12 hours
+        if(currentTime >= timestamp + interval) {
+            for(uint i = 0; i < _dungeon.numbersOfRemaingEnemy.length; i++) {
+                _dungeon.numbersOfRemaingEnemy[i] = _dungeon.numbersOfOriginEnemy[i];
+            }
         }
 
+        //remaing check
         require(_dungeon.numbersOfRemaingEnemy[0] >= _dungeon.numbersOfEnemyOnSingleDungeon[0], "Not Enough Enemy");
+        
+        //transfer the entrance fee
         TOKEN.transferFrom(msg.sender, address(this), _dungeon.cost);
-    
+
+        //reduce the remaing enemy
+        for(uint i = 0; i < _dungeon.numbersOfRemaingEnemy.length; i++) {
+            _dungeon.numbersOfRemaingEnemy[i] -= _dungeon.numbersOfEnemyOnSingleDungeon[i];
+        }
+
+        //update the playerStatus about dungeon
+        _playerStatus.siteOfDungeon = _indexOfDungeon;
+        _playerStatus.timestamp = currentTime;
+
+        //write back
+        dungeon[_indexOfDungeon] = _dungeon;
+        playerStatus[msg.sender] = _playerStatus;
     }
 
-    function createDungeon(uint _cost, uint8[] memory _typesOfEnemy, uint8[] memory _numbersOfOriginEnemy, uint8[] memory _numbersOfEnemyOnSingleDungeon, uint8[] memory _typesOfTreasure, uint8[] memory _numbersOfOriginTreasure, uint8[] memory _maxNumbersOfTreasureOnSingleDungeon) external onlyOwner {
-        dungeon.push(Dungeon(_cost, _typesOfEnemy, _numbersOfOriginEnemy, _numbersOfOriginEnemy, _numbersOfEnemyOnSingleDungeon, _typesOfTreasure, _numbersOfOriginTreasure, _numbersOfOriginTreasure, _numbersOfOriginTreasure));
+    function createDungeon(uint _cost, uint8[] memory _numbersOfOriginEnemy, uint8[] memory _numbersOfEnemyOnSingleDungeon) external onlyOwner {
+        dungeon.push(Dungeon(_cost, _numbersOfOriginEnemy, _numbersOfOriginEnemy, _numbersOfEnemyOnSingleDungeon));
         dungeonSize++;
     }
+
+
     
     function _random(uint256 _seed) internal view returns(uint){
         uint seed_temp =  uint(keccak256(abi.encodePacked(blockhash(block.number - 1), _seed)));
