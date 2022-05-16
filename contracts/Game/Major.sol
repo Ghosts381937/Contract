@@ -156,8 +156,9 @@ contract Major {
         _playerStatus.timestamp = currentTime;
 
         //write back
-        dungeon[_indexOfDungeon] = _dungeon;
-        playerStatus[msg.sender] = _playerStatus;
+        _updateDungeon(_indexOfDungeon, _dungeon);
+        _updatePlayerStatus(_playerStatus);
+
     }
 
     function createDungeon(uint _cost, uint8[] memory _numbersOfOriginEnemy, uint8[] memory _numbersOfEnemyOnSingleDungeon) external onlyOwner {
@@ -186,6 +187,10 @@ contract Major {
   
     function _updateEquipment(Equipment memory _equipment) internal {
         equipment[msg.sender] = _equipment;
+    }
+
+    function _updateDungeon(uint _indexOfDungeon, Dungeon memory _dungeon) internal {
+        dungeon[_indexOfDungeon] = _dungeon;
     }
 
 
