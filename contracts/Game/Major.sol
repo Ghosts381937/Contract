@@ -3,6 +3,7 @@ pragma solidity >=0.4.0 <0.9.0;
 interface ERC20{
     function transferFrom(address from, address to, uint256 amount) external;
     function transfer(address to, uint256 amount) external;
+    function balanceOf(address account) external view returns (uint256);
 }
 /**
    * @title Major
@@ -11,8 +12,11 @@ interface ERC20{
     */
 contract Major {
     address owner;
-    uint8 constant NUMBERS_OF_SKILL = 8;
     ERC20 TOKEN;
+    ERC20 RUBY;
+    ERC20 SAPPHIRE;
+    ERC20 EMERALD;
+
     struct Ability {
         uint str;
         uint intllegence;
@@ -42,26 +46,29 @@ contract Major {
         uint8[] numbersOfEnemyOnSingleDungeon;
     }
     struct DropsInfo {
-        uint[] typesOfMaterial;
+        uint exp;
+        ERC20[] typesOfMaterial;
         uint[] basesOfMaterial;
     }
     struct MaterialInfo {
-        uint numbersOfRemaing;
         uint baseOfAbility;
     }
 
     mapping(address => bool) private isInit;
     mapping(address => Ability) private ability;
-    mapping(address => uint8[NUMBERS_OF_SKILL]) private skill;
     mapping(address => Equipment) private equipment;
     mapping(address => PlayerStatus) private playerStatus;
+    uint private seed;
     Dungeon[] private dungeon;
     uint8 public dungeonSize = 0;
     uint private timestamp;
     uint private interval = 30 seconds;//30 seconds for testing
-
-    constructor(address _erc20) {
-        TOKEN = ERC20(_erc20);
+    DropsInfo[] private dropsInfo;
+    constructor(address _token, address _ruby, address _sapphire, address _emerald) {
+        TOKEN = ERC20(_token);
+        RUBY = ERC20(_ruby);
+        SAPPHIRE = ERC20(_sapphire);
+        EMERALD = ERC20(_emerald);
         owner = msg.sender;
         timestamp = block.timestamp;
     }
@@ -84,9 +91,6 @@ contract Major {
         weapon = _equipment.weapon;
     }
 
-    function skillOf(address _account) external view returns(uint8[NUMBERS_OF_SKILL] memory skills) {
-        skills = skill[_account];
-    }
 
     function playerStatusOf(address _account) external view returns(string memory name, uint8 level, uint experience, uint distributableAbility) {
         PlayerStatus memory _playerStatus = playerStatus[_account];
@@ -121,8 +125,6 @@ contract Major {
 
         //test statement
         _updateEquipment(Equipment(1, 2, 3, 4, 10));
-        uint8[NUMBERS_OF_SKILL] memory _skill = [1, 0, 1, 1, 0, 1, 0, 0];
-        _updateSkill(_skill);
     }
 
     function enterDungeon(uint _indexOfDungeon) external {
@@ -161,11 +163,43 @@ contract Major {
 
     }
 
+    function exchangeMaterial(uint8[] memory _drops) external {
+        for(uint i = 0; i < _drops.length; i++) {
+            DropsInfo memory _dropsInfo = dropsInfo[_drops[i]];
+            for(uint j = 0; j < _dropsInfo.typesOfMaterial.length; j++) {
+                require(_dropsInfo.typesOfMaterial[j].balanceOf(address(this)) 
+                > _dropsInfo.basesOfMaterial[j], "Not enough material");
+                
+                //determine the finalAmount by luk of this player
+                Ability memory _ability = ability[msg.sender];
+                uint finalAmount = _dropsInfo.basesOfMaterial[j] 
+                + ((_ability.luk > _random(seed) % 1001) ? _dropsInfo.basesOfMaterial[j] / 2 : 0);
+                
+                _dropsInfo.typesOfMaterial[j].transfer(msg.sender, finalAmount);
+            }
+        }
+    }
+ 
     function createDungeon(uint _cost, uint8[] memory _numbersOfOriginEnemy, uint8[] memory _numbersOfEnemyOnSingleDungeon) external onlyOwner {
         dungeon.push(Dungeon(_cost, _numbersOfOriginEnemy, _numbersOfOriginEnemy, _numbersOfEnemyOnSingleDungeon));
         dungeonSize++;
     }
 
+    function createDropsInfo(uint _exp, uint8[] memory _typesOfMaterial, uint[] memory _basesOfMaterial) external onlyOwner {
+        ERC20[] memory tempOfTypes = new ERC20[](_typesOfMaterial.length);
+        for(uint i = 0; i < _typesOfMaterial.length; i++) {
+            if(_typesOfMaterial[i] == 0) {
+                tempOfTypes[i] = RUBY;
+            }
+            else if(_typesOfMaterial[i] == 1) {
+                tempOfTypes[i] = SAPPHIRE;
+            }
+            else if(_typesOfMaterial[i] == 2) {
+                tempOfTypes[i] = EMERALD;
+            }
+        }
+        dropsInfo.push(DropsInfo(_exp, tempOfTypes, _basesOfMaterial));
+    }
 
     
     function _random(uint256 _seed) internal view returns(uint){
@@ -179,10 +213,6 @@ contract Major {
 
     function _updateAbility(Ability memory _ability) internal {
         ability[msg.sender] = _ability;
-    }
-
-    function _updateSkill(uint8[NUMBERS_OF_SKILL] memory _skill) internal {
-        skill[msg.sender] = _skill;
     }
   
     function _updateEquipment(Equipment memory _equipment) internal {
