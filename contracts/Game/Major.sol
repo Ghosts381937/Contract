@@ -201,6 +201,32 @@ contract Major {
         dropsInfo.push(DropsInfo(_exp, tempOfTypes, _basesOfMaterial));
     }
 
+    function forge(uint256 _amountOfRuby, uint256 _amountOfSapphire, uint256 _amountOfEmerald) external pure {
+        uint sumOfAmount = _amountOfRuby + _amountOfSapphire + _amountOfEmerald;
+
+        require(sumOfAmount >= 300, "Not Enough Materials");
+
+        //Parameter for createNFT
+        uint _to;
+        
+        
+        //Determine the rarity
+        uint probabilityOfC = 55 * 20;
+        uint probabilityOfU = 30 * 20;
+        uint probabilityOfR = 10 * 20;
+        uint probabilityOfL =  5 * 20;
+        uint offest = (sumOfAmount - 300);
+        probabilityOfC -= offest << 2;
+        probabilityOfU += (offest > 100 ? 10 << 2 : offest << 2) + (offest > 200 ? 5 << 2 : (offest - 100)); 
+        probabilityOfR += offest <= 100 ? 0 : (offest - 100);
+        probabilityOfL += offest <= 200 ? 0 : (offest - 200); 
+
+
+        //Determine the part
+
+
+    }
+
     
     function _random(uint256 _seed) internal view returns(uint){
         uint seed_temp =  uint(keccak256(abi.encodePacked(blockhash(block.number - 1), _seed)));
