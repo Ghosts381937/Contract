@@ -26,22 +26,12 @@ contract Market{
     }
     Product[] private productList;
     function _getIndexMapping(uint256 _productTokenId) private view returns(uint256 _index){
-        for(uint256 i = 0; i < ownerOfProduct[msg.sender].length; i++){
-            if(_productTokenId == ownerOfProduct[msg.sender][i].productTokenId){
+        Product[] memory temp = ownerOfProduct[msg.sender];
+        for(uint256 i = 0; i < temp.length; i++){
+            if(_productTokenId == temp[i].productTokenId){
                 return i;
             }
         }
-    }
-    function _addMapping(uint256 _productTokenId, uint256 _productPrice) private {
-        Product memory temp;
-        temp.productTokenId = _productTokenId;
-        temp.productOwner = msg.sender;
-        temp.productPrice = _productPrice;
-        ownerOfProduct[msg.sender].push(temp);
-    }
-    function _deleteMapping(uint256 _index) private {
-        ownerOfProduct[msg.sender][_index] = ownerOfProduct[msg.sender][ownerOfProduct[msg.sender].length - 1];
-        ownerOfProduct[msg.sender].pop();
     }
     function _appendProduct(uint256 _tokenId, uint256 _price) internal{
         Product memory temp;
@@ -49,12 +39,14 @@ contract Market{
         temp.productOwner = msg.sender;
         temp.productPrice = _price;
         productList.push(temp);
-        _addMapping(_tokenId, _price);
+        ownerOfProduct[msg.sender].push(temp);
     }
     function _deleteProduct(uint256 _index) internal{
         uint256 arraylength = productList.length;
         require(arraylength > _index, "Out of bounds!!!");
-        _deleteMapping(_getIndexMapping(productList[_index].productTokenId));
+        uint256 mappingIndex = _getIndexMapping(productList[_index].productTokenId);
+        ownerOfProduct[msg.sender][mappingIndex] = ownerOfProduct[msg.sender][ownerOfProduct[msg.sender].length - 1];
+        ownerOfProduct[msg.sender].pop();
         productList[_index] =  productList[arraylength-1];
         productList.pop(); 
     }
