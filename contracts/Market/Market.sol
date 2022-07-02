@@ -24,9 +24,9 @@ contract Market{
         uint256 productPrice;
     }
     Product[] private productList;
-    mapping (address => Product[]) private productListOfOwner;
-    function _getIndexFromProductListOfOwner(uint256 _productTokenId) internal view returns(uint256 _index){
-        Product[] memory temp = productListOfOwner[msg.sender];
+    mapping (address => Product[]) private productListFromOwner;
+    function _getIndexOfProductListFromOwner(uint256 _productTokenId) internal view returns(uint256 _index){
+        Product[] memory temp = productListFromOwner[msg.sender];
         for(uint256 i = 0; i < temp.length; i++){
             if(_productTokenId == temp[i].productTokenId){
                 return i;
@@ -39,14 +39,14 @@ contract Market{
         temp.productOwner = msg.sender;
         temp.productPrice = _price;
         productList.push(temp);
-        productListOfOwner[msg.sender].push(temp);
+        productListFromOwner[msg.sender].push(temp);
     }
     function _deleteProduct(uint256 _index) internal{
         uint256 arraylength = productList.length;
         require(arraylength > _index, "Out of bounds!!!");
-        uint256 mappingIndex = _getIndexFromProductListOfOwner(productList[_index].productTokenId);
-        productListOfOwner[msg.sender][mappingIndex] = productListOfOwner[msg.sender][productListOfOwner[msg.sender].length - 1];
-        productListOfOwner[msg.sender].pop();
+        uint256 mappingIndex = _getIndexOfProductListFromOwner(productList[_index].productTokenId);
+        productListFromOwner[msg.sender][mappingIndex] = productListFromOwner[msg.sender][productListFromOwner[msg.sender].length - 1];
+        productListFromOwner[msg.sender].pop();
         productList[_index] =  productList[arraylength-1];
         productList.pop(); 
     }
@@ -62,7 +62,7 @@ contract Market{
         return productList;
     }
     function getProductListFromOwner() external view returns(Product[] memory){
-        return productListOfOwner[msg.sender];
+        return productListFromOwner[msg.sender];
     }
     function listProduct(uint256 _tokenId, uint256 _price) external{
         _ERC721(addrERC721).transferFrom(msg.sender, address(this), _tokenId);
