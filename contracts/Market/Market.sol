@@ -50,7 +50,7 @@ contract Market{
         productList[_index] =  productList[arraylength-1];
         productList.pop(); 
     }
-    function _getIndexOfProduct(uint256 _tokenId) internal view returns(uint256){
+    function _getIndexFromProduct(uint256 _tokenId) internal view returns(uint256){
         Product[] memory temp = productList;
         for(uint256 i = 0; i < temp.length; i++){
             if(temp[i].productTokenId == _tokenId)
@@ -61,7 +61,7 @@ contract Market{
     function getProductList() external view returns(Product[] memory){
         return productList;
     }
-    function getUnlistProduct() external view returns(Product[] memory){
+    function getProductListFromOwner() external view returns(Product[] memory){
         return productListOfOwner[msg.sender];
     }
     function listProduct(uint256 _tokenId, uint256 _price) external{
@@ -69,13 +69,13 @@ contract Market{
         _appendProduct(_tokenId, _price);
     }
     function unlistProduct(uint256 _tokenId) external{
-        uint256 index = _getIndexOfProduct(_tokenId);
+        uint256 index = _getIndexFromProduct(_tokenId);
         require(productList[index].productOwner == msg.sender, "You aren't the owner!!!");
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
         _deleteProduct(index);
     }
     function purchaseProduct(uint256 _tokenId) external{ 
-        uint256 index = _getIndexOfProduct(_tokenId);
+        uint256 index = _getIndexFromProduct(_tokenId);
         Product memory temp = productList[index];
         _ERC20(addrERC20).transferFrom(msg.sender, address(this), temp.productPrice);
         _ERC721(addrERC721).transferFrom(address(this), msg.sender, _tokenId);
