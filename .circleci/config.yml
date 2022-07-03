@@ -19,7 +19,7 @@ jobs:
           command: yarn install
       - run:
           name: Migrate Contracts
-          command: ./node_modules/truffle/build/cli.bundled.js migrate --network development
+          command: ./node_modules/truffle/build/cli.bundled.js migrate --network development --reset
       - run:
           name: Test Contracts
           command: ./node_modules/truffle/build/cli.bundled.js test --network development
