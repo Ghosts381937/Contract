@@ -15,8 +15,8 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: Install npm wee
-          command: npm install
+          name: Install dependencies
+          command: yarn install
       - run:
           name: Migrate Contracts
           command: ./node_modules/truffle/build/cli.bundled.js migrate --network development
