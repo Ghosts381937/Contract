@@ -2,5 +2,5 @@ var TFToken = artifacts.require("TFToken");
 
 module.exports = function(deployer) {
   // deployment steps
-  deployer.deploy(TFToken, "10000");
+  deployer.deploy(TFToken, "1000");
 };
