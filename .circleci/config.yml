@@ -24,7 +24,7 @@ jobs:
           name: Test Contracts
           command: ./node_modules/truffle/build/cli.bundled.js test --network development
       - store_test_results:
-          path: test-results
+          path: ./test-results
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
