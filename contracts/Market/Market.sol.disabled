@@ -61,8 +61,8 @@ contract Market{
     function getProductList() external view returns(Product[] memory){
         return productList;
     }
-    function getProductListFromOwner() external view returns(Product[] memory){
-        return productListFromOwner[msg.sender];
+    function productListFromOwnerOf(address _account) external view returns(Product[] memory){
+        return productListFromOwner[_account];
     }
     function listProduct(uint256 _tokenId, uint256 _price) external{
         _ERC721(addrERC721).transferFrom(msg.sender, address(this), _tokenId);
