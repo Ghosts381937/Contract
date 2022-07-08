@@ -7,9 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract GameItem is ERC721Enumerable, ERC721URIStorage {
+contract Nft is ERC721Enumerable, ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
     struct Attribute {
         uint16 atk;
         uint16 matk;
@@ -25,16 +24,24 @@ contract GameItem is ERC721Enumerable, ERC721URIStorage {
         Attribute attribute;
         uint8[3] skills;
     }
+    string constant public NAME = "Test";
+    string constant public SYMBOL = "T";
+    address public specificContract;
+    Counters.Counter private _tokenIds;
+    address public owner;
     mapping(uint => TokenStat) private tokenStats;
 
-    constructor(address _specificContract) ERC721("Test", "T") {
-        specificContract = _specificContract; 
+    constructor() ERC721(NAME, SYMBOL) { 
+        owner = msg.sender;
+    }
+    
+    modifier onlySpecificContract() {
+        require(msg.sender == specificContract, "You are not the specificContract");
+        _;
     }
 
-    address private specificContract;
-
-    modifier onlySpecificContract() {
-        require(msg.sender == specificContract, "You are not specificContract");
+    modifier onlyOwner() {
+        require(msg.sender == owner, "You are not the owner");
         _;
     }
 
@@ -88,6 +95,10 @@ contract GameItem is ERC721Enumerable, ERC721URIStorage {
         Attribute memory _attribute = Attribute(_atk, _matk, _def, _mdef, _cri, _criDmgRatio);
         _setTokenStat(_rarity, _part, _level, _attribute, _skills, _newItemId);
         return _newItemId;
+    }
+
+    function setSpecificContract(address _contract) onlyOwner external {
+        specificContract = _contract;
     }
 
     function _setTokenStat(uint8 _rarity, uint8 _part, uint8 _level, Attribute memory _attribute, uint8[3] memory _skills,uint _newItemId) internal {
