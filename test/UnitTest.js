@@ -15,7 +15,7 @@ contract("NFT", (accounts) => {
     const nft = await NFT.deployed();
     const name = await nft.name.call();
 
-    assert.equal(name, 'Test', "'Test' wasn't in the [name]" + );
+    assert.equal(name, 'Test', "'Test' wasn't in the [name]");
   });
   it("should be MARKET.address in the [specificContract]", async () => {
     const nft = await NFT.deployed();
