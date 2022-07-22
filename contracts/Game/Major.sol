@@ -215,7 +215,7 @@ contract Major {
     function init(string memory _name) external {
         require(isInited(msg.sender) == false, "The account had been inited");
         isInit[msg.sender] = true;
-        _updatePlayerStatus(PlayerStatus(_name, 0, 0, 0, 0, 0));
+        _updatePlayerStatus(PlayerStatus(_name, 1, 0, 0, 0, 0));
         _updateAbility(Ability(10, 10, 10, 10, 10));
 
         //test statement
@@ -224,6 +224,7 @@ contract Major {
 
     function enterDungeon(uint256 _indexOfDungeon) external {
         //boundary check
+        require(_indexOfDungeon >= 0, "Size Limit Exceeded");
         require(_indexOfDungeon < dungeonSize, "Size Limit Exceeded");
 
         Dungeon memory _dungeon = dungeon[_indexOfDungeon];
