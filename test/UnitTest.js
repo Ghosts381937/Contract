@@ -3,7 +3,7 @@ const NFT = artifacts.require("Nft");
 const MARKET = artifacts.require("Market");
 const MAJOR = artifacts.require("Major");
 
-const parseContractReturnValue = (returnObject, len) => {
+const parseObejectToAssertedForm = (returnObject, len) => {
   for(let i = 0; i < len; i++) {
     delete returnObject[i];
   }
@@ -35,7 +35,7 @@ contract("NFT", (accounts) => {
   });
 });
 contract("MAJOR", (accounts) => {
-  it("The feature of character initialization", async() => {
+  it("init()", async() => {
     const major = await MAJOR.deployed();
     let expectedName = "testName";
     let expectedIsinited = true;
@@ -46,16 +46,26 @@ contract("MAJOR", (accounts) => {
     
     let actualIsinited = await major.isInited.call(accounts[0]);
     let actualPlayerStatus = await major.playerStatusOf.call(accounts[0]);
-    actualPlayerStatus = parseContractReturnValue(actualPlayerStatus, Object.keys(expectedPlayerStatus).length);
+    actualPlayerStatus = parseObejectToAssertedForm(actualPlayerStatus, Object.keys(expectedPlayerStatus).length);
     let actualAbility = await major.abilityOf.call(accounts[0]);
-    actualAbility = parseContractReturnValue(actualAbility, Object.keys(expectedAbility).length);
+    actualAbility = parseObejectToAssertedForm(actualAbility, Object.keys(expectedAbility).length);
     let actualEquipment = await major.equipmentOf.call(accounts[0]);
-    actualEquipment = parseContractReturnValue(actualEquipment, Object.keys(expectedEquipment).length);
+    actualEquipment = parseObejectToAssertedForm(actualEquipment, Object.keys(expectedEquipment).length);
 
     
     assert.deepEqual(expectedIsinited, actualIsinited, "isInited was not successfully alterd");
     assert.deepEqual(expectedPlayerStatus, actualPlayerStatus, "playerStatus was not successfully alterd");
     assert.deepEqual(expectedAbility, actualAbility, "ability was not successfully alterd");
     assert.deepEqual(expectedEquipment, actualEquipment, "equipment was not successfully alterd");
+  })
+
+  it("createDungeon()", async() => {
+    const major = await MAJOR.deployed();
+    expectedDungeon = {cost: web3.utils.toWei('10', 'ether'), numbersOfRemaingEnemy: ["100", "100"], numbersOfOriginEnemy: ["100", "100"], numbersOfEnemyOnSingleDungeon: ["10", "10"]}
+    await major.createDungeon(expectedDungeon.cost, expectedDungeon.numbersOfOriginEnemy, expectedDungeon.numbersOfEnemyOnSingleDungeon, {from: accounts[0]});
+    let actualDungeon = parseObejectToAssertedForm(await major.dungeonOf.call("0"), Object.keys(expectedDungeon).length);
+    expectedDungeon = parseObejectToAssertedForm(expectedDungeon, Object.keys(expectedDungeon).length);
+    assert.deepEqual(expectedDungeon, actualDungeon);
+    
   })
 });
