@@ -166,7 +166,8 @@ contract Major {
             string memory name,
             uint8 level,
             uint256 experience,
-            uint256 distributableAbility
+            uint256 distributableAbility,
+            uint256 siteOfDungeon
         )
     {
         PlayerStatus memory _playerStatus = playerStatus[_account];
@@ -174,6 +175,7 @@ contract Major {
         level = _playerStatus.level;
         experience = _playerStatus.experience;
         distributableAbility = _playerStatus.distributableAbility;
+        siteOfDungeon = _playerStatus.siteOfDungeon;
     }
 
     function abilityOf(address _account)
@@ -224,8 +226,8 @@ contract Major {
 
     function enterDungeon(uint256 _indexOfDungeon) external {
         //boundary check
-        require(_indexOfDungeon >= 0, "Size Limit Exceeded");
-        require(_indexOfDungeon < dungeonSize, "Size Limit Exceeded");
+        require(_indexOfDungeon >= 0, "Out of bounds");
+        require(_indexOfDungeon < dungeonSize, "Out of bounds");
 
         Dungeon memory _dungeon = dungeon[_indexOfDungeon];
         PlayerStatus memory _playerStatus = playerStatus[msg.sender];
