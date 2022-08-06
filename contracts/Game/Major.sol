@@ -43,10 +43,10 @@ contract Major {
     ERC20 EMERALD;
     ERC721 NFT;
     uint256 TOKEN_DECIMAL = 1e18;
-    uint256 PROBABILITY_OF_C = 55 * 20; //55%
-    uint256 PROBABILITY_OF_U = 30 * 20; //30%
-    uint256 PROBABILITY_OF_R = 10 * 20; //10%
-    uint256 PROBABILITY_OF_L = 5 * 20; //5%
+    uint256 PROBABILITY_OF_C = 30 * 20; //55%
+    uint256 PROBABILITY_OF_U = 10 * 20; //30%
+    uint256 PROBABILITY_OF_R = 5 * 20; //10%
+    uint256 PROBABILITY_OF_L = 55 * 20; //5%
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_U = 2;
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_R = 2;
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_L = 2;
@@ -87,7 +87,7 @@ contract Major {
     }
     struct DropsInfo {
         uint256 exp;
-        ERC20[] typesOfMaterial;
+        address[] typesOfMaterial;
         uint256[] basesOfMaterial;
     }
     struct MaterialInfo {
@@ -113,7 +113,7 @@ contract Major {
     uint8 public dungeonSize = 0;
     uint256 private timestamp;
     uint256 private interval = 30 seconds; //30 seconds for testing
-    DropsInfo[] private dropsInfo;
+    DropsInfo[] public dropsInfo;
 
     constructor(
         address _token,
@@ -130,6 +130,8 @@ contract Major {
         owner = msg.sender;
         timestamp = block.timestamp;
     }
+
+    event Probability(uint256 indexed c, uint256 indexed u, uint256 indexed r);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Permission denied.");
@@ -214,6 +216,13 @@ contract Major {
         numbersOfEnemyOnSingleDungeon = _dungeon.numbersOfEnemyOnSingleDungeon;
     }
 
+    function dropsInfoOf(uint8 _index) external view returns(uint256 exp, address[] memory typesOfMaterial, uint256[] memory basesOfMaterial) {
+        DropsInfo memory _dropsInfo = dropsInfo[_index];
+        exp = _dropsInfo.exp;
+        typesOfMaterial = _dropsInfo.typesOfMaterial;
+        basesOfMaterial = _dropsInfo.basesOfMaterial;
+    }
+
     function init(string memory _name) external {
         require(isInited(msg.sender) == false, "The account had been inited");
         isInit[msg.sender] = true;
@@ -272,24 +281,26 @@ contract Major {
 
     function exchangeMaterial(uint8[] memory _drops) external {
         for (uint256 i = 0; i < _drops.length; i++) {
-            DropsInfo memory _dropsInfo = dropsInfo[_drops[i]];
+            if(_drops[i] == 0) {
+                continue;
+            }
+            DropsInfo memory _dropsInfo = dropsInfo[i];
             for (uint256 j = 0; j < _dropsInfo.typesOfMaterial.length; j++) {
                 require(
-                    _dropsInfo.typesOfMaterial[j].balanceOf(address(this)) >
+                    ERC20(_dropsInfo.typesOfMaterial[j]).balanceOf(address(this)) >
                         _dropsInfo.basesOfMaterial[j],
                     "Not enough material"
                 );
 
                 //determine the finalAmount with luk of this player
                 Ability memory _ability = ability[msg.sender];
-                uint256 finalAmount = _dropsInfo.basesOfMaterial[j] +
+                uint256 finalAmount = _dropsInfo.basesOfMaterial[j] * _drops[i] +
                     (
                         (_ability.luk > _random(seed) % 1001)
                             ? _dropsInfo.basesOfMaterial[j] / 2
                             : 0
                     );
-                seed = (seed + finalAmount) % type(uint192).max;
-                _dropsInfo.typesOfMaterial[j].transfer(msg.sender, finalAmount);
+                ERC20(_dropsInfo.typesOfMaterial[j]).transfer(msg.sender, finalAmount);
             }
         }
     }
@@ -312,20 +323,10 @@ contract Major {
 
     function createDropsInfo(
         uint256 _exp,
-        uint8[] memory _typesOfMaterial,
+        address[] memory _typesOfMaterial,
         uint256[] memory _basesOfMaterial
     ) external onlyOwner {
-        ERC20[] memory tempOfTypes = new ERC20[](_typesOfMaterial.length);
-        for (uint256 i = 0; i < _typesOfMaterial.length; i++) {
-            if (_typesOfMaterial[i] == 0) {
-                tempOfTypes[i] = RUBY;
-            } else if (_typesOfMaterial[i] == 1) {
-                tempOfTypes[i] = SAPPHIRE;
-            } else if (_typesOfMaterial[i] == 2) {
-                tempOfTypes[i] = EMERALD;
-            }
-        }
-        dropsInfo.push(DropsInfo(_exp, tempOfTypes, _basesOfMaterial));
+        dropsInfo.push(DropsInfo(_exp, _typesOfMaterial, _basesOfMaterial));
     }
 
     function forge(
@@ -334,6 +335,10 @@ contract Major {
         uint16 _amountOfSapphire,
         uint16 _amountOfEmerald
     ) external returns (uint256) {
+        require(_amountOfRuby <= 200, "Too Many Ruby");
+        require(_amountOfSapphire <= 200, "Too Many Sapphire");
+        require(_amountOfEmerald <= 200, "Too Many Emerald");
+        
         uint256 sumOfAmount = _amountOfRuby +
             _amountOfSapphire +
             _amountOfEmerald;
@@ -362,7 +367,6 @@ contract Major {
         NFTInfo memory nftInfo;
 
         uint256 randomNumber = (_random(seed) % 2000) + 1;
-        seed = (seed + randomNumber) % type(uint192).max;
 
         //Determine the nftInfo
         nftInfo.rarity = _rollRarity(sumOfAmount, randomNumber);
@@ -396,7 +400,6 @@ contract Major {
             nftInfo.criDmgRatio,
             nftInfo.skills
         );
-
         return tokenId;
     }
 
@@ -436,20 +439,20 @@ contract Major {
         uint256 probabilityOfR = PROBABILITY_OF_R;
         uint256 probabilityOfL = PROBABILITY_OF_L;
         uint256 offest = (sumOfAmount - 300);
-        probabilityOfC -= offest << 2;
+        probabilityOfC -= offest << 1;
         probabilityOfU +=
-            (offest > 100 ? 10 << 2 : offest << 2) +
-            (offest > 200 ? 5 << 2 : (offest - 100));
+            (offest > 100 ? 10 * 20 : offest << 1) +
+            (offest > 200 ? 5 * 20 : (offest > 100 ? (offest - 100) : 0));
         probabilityOfR += offest <= 100 ? 0 : (offest - 100);
         probabilityOfL += offest <= 200 ? 0 : (offest - 200);
-
+        
         if (randomNumber <= probabilityOfC) {
             rarity = 0;
-        } else if (randomNumber <= probabilityOfU) {
+        } else if (randomNumber <= probabilityOfC + probabilityOfU) {
             rarity = 1;
-        } else if (randomNumber <= probabilityOfR) {
+        } else if (randomNumber <= probabilityOfC + probabilityOfU + probabilityOfR) {
             rarity = 2;
-        } else if (randomNumber <= probabilityOfL) {
+        } else if (randomNumber <= probabilityOfC + probabilityOfU + probabilityOfR + probabilityOfL) {
             rarity = 3;
         }
     }
@@ -515,13 +518,12 @@ contract Major {
                 ? 1
                 : 0;
         }
-
         uint8 lossRate;
         {
             lossRate = LOSS_RATE;
         }
 
-        uint16 attribute;
+        uint32 attribute;
         {
             attribute = _calculateAttribute(randomNumber, rarity);
         }
@@ -529,29 +531,29 @@ contract Major {
         {
             if (_part == 0) {
                 //weapon
-                atk = attribute * (isMagic ^ 1);
+                atk = (uint16)(attribute * (isMagic ^ 1));
                 def =
-                    ((((attribute) * (isMagic ^ 1) * 10) / 10) * lossRate) /
-                    10;
-                matk = (attribute) * (isMagic);
-                mdef = ((((attribute) * (isMagic) * 10) / 10) * lossRate) / 10;
-                cri = ((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001;
+                    (uint16)((((attribute) * (isMagic ^ 1) * 10) / 10 * lossRate) /
+                    10);
+                matk = (uint16)((attribute) * (isMagic));
+                mdef = (uint16)((((attribute) * (isMagic) * 10) / 10 * lossRate) / 10);
+                cri = (uint16)(((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001);
             } else if (_part > 0) {
                 //equipment
                 atk =
-                    (((((attribute) * (isMagic ^ 1)) * 10) / 10) * lossRate) /
-                    10;
+                    (uint16)(((((attribute) * (isMagic ^ 1)) * 10) / 10 * lossRate) /
+                    10);
                 def =
-                    (((((attribute) * (isMagic ^ 1)) * 10) / 10) *
+                    (uint16)(((((attribute) * (isMagic ^ 1)) * 10) *
                         (10 - _part)) /
-                    10;
+                    10);
                 matk =
-                    (((((attribute) * (isMagic)) * 10) / 10) * lossRate) /
-                    10;
+                    (uint16)(((((attribute) * (isMagic)) * 10) / 10 * lossRate) /
+                    10);
                 mdef =
-                    (((((attribute) * (isMagic)) * 10) / 10) * (1 - _part)) /
-                    10;
-                cri = ((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001;
+                    (uint16)(((((attribute) * (isMagic)) * 10) * (1 - _part)) /
+                    10);
+                cri = (uint16)(((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001);
             }
         }
         //Determine the criDmgRatio
@@ -577,9 +579,11 @@ contract Major {
         returns (uint8 criDmgRatio)
     {
         uint8[4] memory probabilityOfCriDmgRatio = PROBABILITY_OF_CRI_DMG_RATIO;
-        randomNumber = (randomNumber % 100) + 1 + (_amountOfEmerald / 10);
+        randomNumber = (randomNumber % 80 + 1) + (_amountOfEmerald / 10);
+        uint16 probability;
         for (uint8 i = 0; i < 4; i++) {
-            if (randomNumber <= probabilityOfCriDmgRatio[i]) {
+            probability += probabilityOfCriDmgRatio[i];
+            if (randomNumber <= probability) {
                 criDmgRatio = uint8((randomNumber % MAX_CRI_DMG_RATIO[i]) + 1);
                 break;
             }
