@@ -11,6 +11,9 @@ const COUNT_OF_DROPS_INFO = 3;
 const COUNT_OF_PLAYER_STATUS = 5;
 const INITIAL_BALANCE_OF_MAJOR = '5000';
 
+let key = false;
+
+
 let expectedDropsInfos = [{
     exp: 10, 
     typesOfMaterial: [RUBY.address, SAPPHIRE.address], 
@@ -22,7 +25,7 @@ let expectedDropsInfos = [{
   },{
     exp: 25, 
     typesOfMaterial: [SAPPHIRE.address], 
-    basesOfMaterial: [web3.utils.toWei('20', 'ether')]
+    basesOfMaterial: [web3.utils.toWei('200', 'ether')]
   },
 ];
 
@@ -50,8 +53,6 @@ const getBalanceOfMaterials = async(ruby, sapphire, emerald, account) => {
   let originBalanceOfEmerald = await emerald.balanceOf.call(account);
   return {ruby: originBalanceOfRuby, sapphire: originBalanceOfSapphire, emerald: originBalanceOfEmerald};
 }
-
-
 
 const getRandomInt = (max) => {
   return Math.floor(Math.random() * max);
@@ -107,6 +108,25 @@ contract("NFT", () => {
   });
 });
 contract("MAJOR", (accounts) => {
+  // Polls `key` every 1s
+  const lock = function(done) {
+    if (key == false) {
+      key = true;
+      done();
+    }
+    else setTimeout( function(){ check(done) }, 1000 );
+  }
+  const unlock = function(done) {
+    key = false;
+    done();
+  }
+  beforeEach(function( done ){
+    lock( done );
+  });
+  afterEach(function( done ){
+    unlock( done );
+  });
+
   //functional test
   it("init()", async() => {
     const major = await MAJOR.deployed();
@@ -246,8 +266,6 @@ contract("MAJOR", (accounts) => {
     await sapphire.approve(MAJOR.address, web3.utils.toWei('99999', 'ether'), {from:accounts[0]});
     await emerald.approve(MAJOR.address, web3.utils.toWei('99999', 'ether'), {from:accounts[0]});
 
-    let expectedBalanceOfMaterials = await getBalanceOfMaterials(ruby, sapphire, emerald, accounts[0]);
-    console.log(formatRawObejectToAssertableObject(expectedBalanceOfMaterials));
     let amountsForForge = [{
         part: getRandomInt(4),
         ruby: 100,
@@ -256,12 +274,6 @@ contract("MAJOR", (accounts) => {
       },{
         part: getRandomInt(4),
         ruby: 101,
-        sapphire: 100,
-        emerald: 100
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 150,
         sapphire: 100,
         emerald: 100
       },
@@ -283,116 +295,6 @@ contract("MAJOR", (accounts) => {
         sapphire: 200,
         emerald: 200
       },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
-      {
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },{
-        part: getRandomInt(4),
-        ruby: 200,
-        sapphire: 200,
-        emerald: 200
-      },
     ];
     for(let i = 0; i < amountsForForge.length; i++) {
       amount = amountsForForge[i];
@@ -401,47 +303,51 @@ contract("MAJOR", (accounts) => {
     let expectedBalance = amountsForForge.length;
     let actualBalance = await nft.balanceOf.call(accounts[0]);
     assert.equal(expectedBalance, actualBalance);
-    for(let i = 1; i < expectedBalance + 1; i++) {
-      let tokenStat = await nft.tokenStatOf.call(i);
-      console.log(formatRawObejectToAssertableObject(tokenStat, 5));
-    }
   });
+  it("exchangeMaterial()", async() => {
+    const major = await MAJOR.deployed();
+    const ruby = await RUBY.deployed();
+    const sapphire = await SAPPHIRE.deployed();
+    const emerald = await EMERALD.deployed();
 
-  // it("exchangeMaterial()", async() => {
-  //   const major = await MAJOR.deployed();
-  //   const ruby = await RUBY.deployed();
-  //   const sapphire = await SAPPHIRE.deployed();
-  //   const emerald = await EMERALD.deployed();
+    let dropsArr = [[10, 0, 0], [10, 5, 0], [5, 4, 3], [0, 0, 25]];
+    let drops;
+    let expectedBalanceOfMaterials = await getBalanceOfMaterials(ruby, sapphire, emerald, accounts[0]);
+    let expectedReason = "Not enough material";//test for out of bounds
+    for(let index = 0; index < dropsArr.length; index++) {
+      drops = dropsArr[index];
+      for(let j = 0; j < drops.length; j++) {
+        let typesOfMaterial = expectedDropsInfos[j].typesOfMaterial;
+        let basesOfMaterial = expectedDropsInfos[j].basesOfMaterial;
+        for(let k = 0; k < typesOfMaterial.length; k++) {
+          let material = typesOfMaterial[k];
+          if(material === RUBY.address) {
+            expectedBalanceOfMaterials.ruby = expectedBalanceOfMaterials.ruby.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j]))); 
+          }
+          else if(material === SAPPHIRE.address) {
+            expectedBalanceOfMaterials.sapphire = expectedBalanceOfMaterials.sapphire.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j])));
+          }
+          else if(material === EMERALD.address) {
+            expectedBalanceOfMaterials.emerald = expectedBalanceOfMaterials.emerald.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j])));
+          }
+        }
+      }
+    
+      try {
+        await major.exchangeMaterial(drops, {from:accounts[0]});
+      } catch(e) {
+        let actualReason = e.reason;
+        assert.equal(expectedReason, actualReason)
+        continue;
+      }
 
-  //   let dropsArr = [[10, 0, 0], [10, 5, 0], [5, 4, 3], [20, 20, 20]];
-  //   let drops;
-  //   let expectedBalanceOfMaterials = await getBalanceOfMaterials(ruby, sapphire, emerald, accounts[0]);
-  //   for(let index = 0; index < dropsArr.length; index++) {
-  //     drops = dropsArr[index];
-  //     for(let j = 0; j < drops.length; j++) {
-  //       let typesOfMaterial = expectedDropsInfos[j].typesOfMaterial;
-  //       let basesOfMaterial = expectedDropsInfos[j].basesOfMaterial;
-  //       for(let k = 0; k < typesOfMaterial.length; k++) {
-  //         let material = typesOfMaterial[k];
-  //         if(material === RUBY.address) {
-  //           expectedBalanceOfMaterials.ruby = expectedBalanceOfMaterials.ruby.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j]))); 
-  //         }
-  //         else if(material === SAPPHIRE.address) {
-  //           expectedBalanceOfMaterials.sapphire = expectedBalanceOfMaterials.sapphire.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j])));
-  //         }
-  //         else if(material === EMERALD.address) {
-  //           expectedBalanceOfMaterials.emerald = expectedBalanceOfMaterials.emerald.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j])));
-  //         }
-  //       }
-  //     }
-  //     await major.exchangeMaterial(drops, {from:accounts[0]});
-  //     let actualBalanceOfMaterials = {
-  //       ruby: await ruby.balanceOf.call(accounts[0]), 
-  //       sapphire: await sapphire.balanceOf.call(accounts[0]), 
-  //       emerald: await emerald.balanceOf.call(accounts[0])
-  //     };
-  //     assert.deepEqual(formatRawObejectToAssertableObject(expectedBalanceOfMaterials), 
-  //       formatRawObejectToAssertableObject(actualBalanceOfMaterials));          
-  //   };
-  // });
+      let actualBalanceOfMaterials = {
+        ruby: await ruby.balanceOf.call(accounts[0]), 
+        sapphire: await sapphire.balanceOf.call(accounts[0]), 
+        emerald: await emerald.balanceOf.call(accounts[0])
+      };
+      assert.deepEqual(formatRawObejectToAssertableObject(expectedBalanceOfMaterials), 
+        formatRawObejectToAssertableObject(actualBalanceOfMaterials));          
+    };
+  });
 });

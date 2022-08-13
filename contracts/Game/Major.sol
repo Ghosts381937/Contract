@@ -43,10 +43,10 @@ contract Major {
     ERC20 EMERALD;
     ERC721 NFT;
     uint256 TOKEN_DECIMAL = 1e18;
-    uint256 PROBABILITY_OF_C = 30 * 20; //55%
-    uint256 PROBABILITY_OF_U = 10 * 20; //30%
-    uint256 PROBABILITY_OF_R = 5 * 20; //10%
-    uint256 PROBABILITY_OF_L = 55 * 20; //5%
+    uint256 PROBABILITY_OF_C = 55 * 20; //55%
+    uint256 PROBABILITY_OF_U = 30 * 20; //30%
+    uint256 PROBABILITY_OF_R = 10 * 20; //10%
+    uint256 PROBABILITY_OF_L = 5 * 20; //5%
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_U = 2;
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_R = 2;
     uint8 TOTAL_COMBINATION_OF_SKILL_ON_L = 2;
@@ -288,7 +288,7 @@ contract Major {
             for (uint256 j = 0; j < _dropsInfo.typesOfMaterial.length; j++) {
                 require(
                     ERC20(_dropsInfo.typesOfMaterial[j]).balanceOf(address(this)) >
-                        _dropsInfo.basesOfMaterial[j],
+                        (_dropsInfo.basesOfMaterial[j] * _drops[i]) / 4 * 7,//*1.75
                     "Not enough material"
                 );
 
@@ -338,6 +338,7 @@ contract Major {
         require(_amountOfRuby <= 200, "Too Many Ruby");
         require(_amountOfSapphire <= 200, "Too Many Sapphire");
         require(_amountOfEmerald <= 200, "Too Many Emerald");
+        require(_part <= 4, "Too Many Part");
         
         uint256 sumOfAmount = _amountOfRuby +
             _amountOfSapphire +
@@ -401,6 +402,29 @@ contract Major {
             nftInfo.skills
         );
         return tokenId;
+    }
+
+    function distributeAbility(uint256 _str,uint256 _intllegence,uint256 _dex,uint256 _vit,uint256 _luk) external {
+        Ability memory _ability;
+        _ability = ability[msg.sender];
+        PlayerStatus memory _playerStatus;
+        _playerStatus = playerStatus[msg.sender];
+        uint256 sumOfAbility = _ability.str + _ability.intllegence + _ability.dex + _ability.vit + _ability.luk;
+        uint256 sumOfNewAbility = _str + _intllegence + _dex + _vit + _luk;
+
+        require(_str >= _ability.str && _intllegence >= _ability.intllegence &&
+                _dex >= _ability.dex && _vit >= _ability.vit && _luk >= _ability.luk, "New ability is less than current ability");
+        require(_playerStatus.distributableAbility >= sumOfNewAbility - sumOfAbility, "Too many distributableAbility");
+    
+        _playerStatus.distributableAbility -= sumOfNewAbility - sumOfAbility;
+        _ability.str = _str;
+        _ability.intllegence = _intllegence;
+        _ability.dex = _dex;
+        _ability.vit = _vit;
+        _ability.luk = _luk;
+
+        _updatePlayerStatus(_playerStatus);
+        _updateAbility(_ability);
     }
 
     function _random(uint256 _seed) internal view returns (uint256) {
