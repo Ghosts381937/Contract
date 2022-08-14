@@ -28,6 +28,7 @@ interface ERC721 {
         uint16 _criDmgRatio,
         uint8[3] memory _skills
     ) external returns (uint256);
+    function ownerOf(uint256 tokenId) public returns (address);
 }
 
 /**
@@ -131,7 +132,7 @@ contract Major {
         timestamp = block.timestamp;
     }
 
-    event Probability(uint256 indexed c, uint256 indexed u, uint256 indexed r);
+    event Equip(Equipment indexed oldEquipment, Equipment indexed newEquipment);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Permission denied.");
@@ -425,6 +426,20 @@ contract Major {
 
         _updatePlayerStatus(_playerStatus);
         _updateAbility(_ability);
+    }
+
+    function equip(uint256 _helmet, uint256 _chestplate, uint256 _leggings, uint256 _boots, uint256 _weapon) external view {
+        require(
+            NFT.ownerOf(_helmet) == msg.sender &&
+            NFT.ownerOf(_chestplate) == msg.sender &&
+            NFT.ownerOf(_leggings) == msg.sender &&
+            NFT.ownerOf(_boots) == msg.sender &&
+            NFT.ownerOf(_weapon) == msg.sender
+            , "You are not the owner.");
+
+        Equipment memory newEquipment = Equipment(_helmet, _chestplate, _leggings, _boots, _weapon);
+        _updateEquipment(newEquipment);
+        emit Equip(equipment[msg.sender], newEquipment);
     }
 
     function _random(uint256 _seed) internal view returns (uint256) {
