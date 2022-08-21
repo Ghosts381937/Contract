@@ -15,7 +15,6 @@ module.exports = async function(deployer, nil, accounts) {
   await deployer.deploy(CURRENCY)
   await deployer.deploy(MARKET, CURRENCY.address, NFT.address)
   await deployer.deploy(MAJOR, CURRENCY.address, NFT.address, RUBY.address, SAPPHIRE.address, EMERALD.address)
-
   
   const nft = await NFT.deployed();
   const currency = await CURRENCY.deployed();
@@ -27,10 +26,6 @@ module.exports = async function(deployer, nil, accounts) {
   await currency.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
   await ruby.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
   await sapphire.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
-  await emerald.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
+  await emerald.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]})
 
-
-  
-
-  
 }

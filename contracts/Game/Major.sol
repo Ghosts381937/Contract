@@ -28,7 +28,7 @@ interface ERC721 {
         uint16 _criDmgRatio,
         uint8[3] memory _skills
     ) external returns (uint256);
-    function ownerOf(uint256 tokenId) public returns (address);
+    function ownerOf(uint256 tokenId) external returns (address);
 }
 
 /**
@@ -57,6 +57,12 @@ contract Major {
     uint8[4] PROBABILITY_OF_CRI_DMG_RATIO = [55, 27, 13, 4]; //55% to get 1~5% criDmgRatio, 27% to get 6~10% criDmgRatio, and so on.
     uint8 LOSS_RATE = 3; //30% to loss
     uint8 INITIAL_LEVEL = 1;
+    uint8 MAX_LEVEL = 100;
+    uint16[3] CONST_EXP = [100, 150, 200];
+    uint16 LINEAR_EXP_LEVEL = 31;
+    uint16 LINEAR_EXP_BASE = 300;
+    uint16 LINEAR_EXP_RATIO = 2;
+    uint16[2] LINEAR_EXP_FACTOR = [10, 5];//10% for lv31 ~ 90, 5% for lv 91 ~ 100
 
     struct Ability {
         uint256 str;
@@ -301,6 +307,8 @@ contract Major {
                             ? _dropsInfo.basesOfMaterial[j] / 2
                             : 0
                     );
+                
+                _gainExp(_dropsInfo.exp);
                 ERC20(_dropsInfo.typesOfMaterial[j]).transfer(msg.sender, finalAmount);
             }
         }
@@ -428,7 +436,7 @@ contract Major {
         _updateAbility(_ability);
     }
 
-    function equip(uint256 _helmet, uint256 _chestplate, uint256 _leggings, uint256 _boots, uint256 _weapon) external view {
+    function equip(uint256 _helmet, uint256 _chestplate, uint256 _leggings, uint256 _boots, uint256 _weapon) external {
         require(
             NFT.ownerOf(_helmet) == msg.sender &&
             NFT.ownerOf(_chestplate) == msg.sender &&
@@ -627,5 +635,36 @@ contract Major {
                 break;
             }
         }
+    }
+
+    function _gainExp(uint256 _getExp) internal view {
+        PlayerStatus memory playerStatus_ = playerStatus[msg.sender];
+        uint256 level = playerStatus_.level;
+        uint256 exp = playerStatus_.experience;
+        
+        uint256 levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / 5)) / 10; //Using mut10 to prevent the floating point number
+
+        if(level <= 10) {
+            levelUpGap = CONST_EXP[0];
+        }
+        else if(level > 10 && level <= 20) {
+            levelUpGap = CONST_EXP[1];
+        }
+        else if(level > 20 && level <= 30) {
+            levelUpGap = CONST_EXP[2];
+        }
+        else if(level > 30 && level <= 90) {
+            levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / LINEAR_EXP_FACTOR[0])) / 10; //Using mut10 to prevent the floating point number
+        }
+        else if(level > 90 && level <= 100) {
+            levelUpGap = levelUpGap;
+        }
+
+        exp += _getExp;
+        if(exp >= levelUpGap) {
+            level += 1;
+            exp = exp - levelUpGap;
+        }
+
     }
 }
