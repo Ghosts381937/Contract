@@ -18,10 +18,10 @@
  *
  */
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
+// const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-const fs = require('fs');
-const mnemonic = fs.readFileSync(".secret").toString().trim();
+// const fs = require('fs');
+// const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 module.exports = {
   /**
@@ -35,13 +35,13 @@ module.exports = {
    */
 
   networks: {
-    testnet: {
-      provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545`),
-      network_id: 97,
-      timeoutBlocks: 400,
-      skipDryRun: true,
-      gasPrice: 11000000000
-    },
+    // testnet: {
+    //   provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545`),
+    //   network_id: 97,
+    //   timeoutBlocks: 400,
+    //   skipDryRun: true,
+    //   gasPrice: 11000000000
+    // },
     development: {
       network_id: "*",
       port: 8545,
