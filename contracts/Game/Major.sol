@@ -637,9 +637,9 @@ contract Major {
         }
     }
 
-    function _gainExp(uint256 _getExp) internal view {
+    function _gainExp(uint256 _getExp) internal {
         PlayerStatus memory playerStatus_ = playerStatus[msg.sender];
-        uint256 level = playerStatus_.level;
+        uint8 level = playerStatus_.level;
         uint256 exp = playerStatus_.experience;
         
         uint256 levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / 5)) / 10; //Using mut10 to prevent the floating point number
@@ -664,7 +664,12 @@ contract Major {
         if(exp >= levelUpGap) {
             level += 1;
             exp = exp - levelUpGap;
+            playerStatus_.level = level;
+            playerStatus_.experience = exp;
+            playerStatus_.distributableAbility += 15;
         }
+
+        _updatePlayerStatus(playerStatus_);
 
     }
 }
