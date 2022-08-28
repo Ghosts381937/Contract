@@ -139,6 +139,7 @@ contract Major {
     }
 
     event Equip(Equipment indexed oldEquipment, Equipment indexed newEquipment);
+    event Test(uint a, uint b);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Permission denied.");
@@ -307,10 +308,9 @@ contract Major {
                             ? _dropsInfo.basesOfMaterial[j] / 2
                             : 0
                     );
-                
-                _gainExp(_dropsInfo.exp);
                 ERC20(_dropsInfo.typesOfMaterial[j]).transfer(msg.sender, finalAmount);
             }
+            _gainExp(_dropsInfo.exp * _drops[i]);
         }
     }
 
@@ -642,32 +642,30 @@ contract Major {
         uint8 level = playerStatus_.level;
         uint256 exp = playerStatus_.experience;
         
-        uint256 levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / 5)) / 10; //Using mut10 to prevent the floating point number
+        // uint256 levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / 5)) / 10; //Using mut10 to prevent the floating point number
 
-        if(level <= 10) {
-            levelUpGap = CONST_EXP[0];
-        }
-        else if(level > 10 && level <= 20) {
-            levelUpGap = CONST_EXP[1];
-        }
-        else if(level > 20 && level <= 30) {
-            levelUpGap = CONST_EXP[2];
-        }
-        else if(level > 30 && level <= 90) {
-            levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / LINEAR_EXP_FACTOR[0])) / 10; //Using mut10 to prevent the floating point number
-        }
-        else if(level > 90 && level <= 100) {
-            levelUpGap = levelUpGap;
-        }
-
+        // if(level <= 10) {
+        //     levelUpGap = CONST_EXP[0];
+        // }
+        // else if(level > 10 && level <= 20) {
+        //     levelUpGap = CONST_EXP[1];
+        // }
+        // else if(level > 20 && level <= 30) {
+        //     levelUpGap = CONST_EXP[2];
+        // }
+        // else if(level > 30 && level <= 90) {
+        //     levelUpGap = LINEAR_EXP_BASE * (2 * 10 + ((MAX_LEVEL - LINEAR_EXP_LEVEL) * 10 / LINEAR_EXP_FACTOR[0])) / 10; //Using mut10 to prevent the floating point number
+        // }
+        // else if(level > 90 && level <= 100) {
+        //     levelUpGap = levelUpGap;
+        // }
         exp += _getExp;
-        if(exp >= levelUpGap) {
-            level += 1;
-            exp = exp - levelUpGap;
-            playerStatus_.level = level;
-            playerStatus_.experience = exp;
-            playerStatus_.distributableAbility += 15;
-        }
+        uint8 newLevel = uint8(exp / 100 + 1);
+        playerStatus_.distributableAbility += (newLevel - level) * 15;
+        level = newLevel;
+        playerStatus_.experience = exp;
+        playerStatus_.level = level;
+        emit Test(exp, _getExp);
 
         _updatePlayerStatus(playerStatus_);
 

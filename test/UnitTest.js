@@ -15,15 +15,15 @@ let key = false;
 
 
 let expectedDropsInfos = [{
-    exp: 10, 
+    exp: 50, 
     typesOfMaterial: [RUBY.address, SAPPHIRE.address], 
     basesOfMaterial: [web3.utils.toWei('10', 'ether'), web3.utils.toWei('20', 'ether')]
   },{
-    exp: 20, 
+    exp: 200, 
     typesOfMaterial: [RUBY.address, SAPPHIRE.address, EMERALD.address], 
     basesOfMaterial: [web3.utils.toWei('100', 'ether'), web3.utils.toWei('40', 'ether'), web3.utils.toWei('70', 'ether')]
   },{
-    exp: 25, 
+    exp: 300, 
     typesOfMaterial: [SAPPHIRE.address], 
     basesOfMaterial: [web3.utils.toWei('200', 'ether')]
   },
@@ -313,12 +313,16 @@ contract("MAJOR", (accounts) => {
     let dropsArr = [[10, 0, 0], [10, 5, 0], [5, 4, 3], [0, 0, 25]];
     let drops;
     let expectedBalanceOfMaterials = await getBalanceOfMaterials(ruby, sapphire, emerald, accounts[0]);
+    let temp = formatRawObejectToAssertableObject(await major.playerStatusOf.call(accounts[0]));
+    let expectedLevel = Number(temp.level);
+    let expectedExperience = Number(temp.experience);
     let expectedReason = "Not enough material";//test for out of bounds
     for(let index = 0; index < dropsArr.length; index++) {
       drops = dropsArr[index];
       for(let j = 0; j < drops.length; j++) {
         let typesOfMaterial = expectedDropsInfos[j].typesOfMaterial;
         let basesOfMaterial = expectedDropsInfos[j].basesOfMaterial;
+        let expOfMaterial = expectedDropsInfos[j].exp;
         for(let k = 0; k < typesOfMaterial.length; k++) {
           let material = typesOfMaterial[k];
           if(material === RUBY.address) {
@@ -331,8 +335,9 @@ contract("MAJOR", (accounts) => {
             expectedBalanceOfMaterials.emerald = expectedBalanceOfMaterials.emerald.add(new web3.utils.BN(basesOfMaterial[k]).mul(new web3.utils.BN(drops[j])));
           }
         }
+        expectedExperience += expOfMaterial * drops[j];
       }
-    
+      expectedLevel = Math.floor(expectedExperience / 100 + 1);
       try {
         await major.exchangeMaterial(drops, {from:accounts[0]});
       } catch(e) {
@@ -346,8 +351,13 @@ contract("MAJOR", (accounts) => {
         sapphire: await sapphire.balanceOf.call(accounts[0]), 
         emerald: await emerald.balanceOf.call(accounts[0])
       };
+      temp = formatRawObejectToAssertableObject(await major.playerStatusOf.call(accounts[0]));
+      let actualLevel = Number(temp.level);
+      let actualExperience = Number(temp.experience);
       assert.deepEqual(formatRawObejectToAssertableObject(expectedBalanceOfMaterials), 
-        formatRawObejectToAssertableObject(actualBalanceOfMaterials));          
+        formatRawObejectToAssertableObject(actualBalanceOfMaterials));      
+      assert.equal(expectedLevel, actualLevel);
+      assert.equal(expectedExperience, actualExperience);    
     };
   });
 });
