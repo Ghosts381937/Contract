@@ -360,4 +360,18 @@ contract("MAJOR", (accounts) => {
       assert.equal(expectedExperience, actualExperience);    
     };
   });
+
+  it("destroyEquipment()", async() => {
+    const major = await MAJOR.deployed();
+    const nft = await NFT.deployed();
+    await nft.approve(MAJOR.address, '1');
+    await nft.approve(MAJOR.address, '2');
+    
+    await major.destroyEquipment('1', {from:accounts[0]});
+    await major.destroyEquipment('2', {from:accounts[0]});
+
+    let expectedAttribute = '0,0,0,0,0,0';
+    assert.equal(formatRawObejectToAssertableObject(await nft.tokenStatOf.call('1'), 5).attribute, expectedAttribute);
+    assert.equal(formatRawObejectToAssertableObject(await nft.tokenStatOf.call('2'), 5).attribute, expectedAttribute);
+  });
 });

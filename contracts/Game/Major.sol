@@ -28,7 +28,10 @@ interface ERC721 {
         uint16 _criDmgRatio,
         uint8[3] memory _skills
     ) external returns (uint256);
+
     function ownerOf(uint256 tokenId) external returns (address);
+
+    function burn(uint256 tokenId) external;
 }
 
 /**
@@ -448,6 +451,10 @@ contract Major {
         Equipment memory newEquipment = Equipment(_helmet, _chestplate, _leggings, _boots, _weapon);
         _updateEquipment(newEquipment);
         emit Equip(equipment[msg.sender], newEquipment);
+    }
+
+    function destroyEquipment(uint256 _tokenId) external {
+        NFT.burn(_tokenId);
     }
 
     function _random(uint256 _seed) internal view returns (uint256) {
