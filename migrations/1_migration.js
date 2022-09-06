@@ -6,6 +6,10 @@ const NFT = artifacts.require("Nft");
 const MARKET = artifacts.require("Market");
 const MAJOR = artifacts.require("Major");
 
+const DEV_ACCOUNTS = ['0x23FdC87bEeC6da70cFD285eD947550fcA69a6e38', '0xbdAba61A2EefC077e4c79425fd9395A371B8D141'];
+const TOTAL_SUPPLY = new web3.utils.BN('10000000000000000000000000')
+const AMOUNT_TO_MAJOR = TOTAL_SUPPLY.div(new web3.utils.BN('10')) //0.1 * TOTAL_SUPPLY
+const AMOUNT_TO_DEV = AMOUNT_TO_MAJOR.mul(new web3.utils.BN('4')) //0.3 * TOTAL_SUPPLY
 module.exports = async function(deployer, nil, accounts) {
   // deployment steps
   await deployer.deploy(RUBY)
@@ -22,10 +26,24 @@ module.exports = async function(deployer, nil, accounts) {
   const sapphire = await SAPPHIRE.deployed();
   const emerald = await EMERALD.deployed();
 
-  await nft.setSpecificContract(MAJOR.address, {from:accounts[0]})
-  await currency.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
-  await ruby.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
-  await sapphire.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]});
-  await emerald.transfer(MAJOR.address, web3.utils.toWei('5000', 'ether'), {from:accounts[0]})
+  nft.setSpecificContract(MAJOR.address, {from:accounts[0]})
+  currency.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  ruby.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  sapphire.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  emerald.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  
+  DEV_ACCOUNTS.forEach(async (devAccount) => {
+    currency.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    ruby.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    sapphire.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    emerald.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  })
 
+  while(true) {
+    let sapphireBalance = await sapphire.balanceOf.call(DEV_ACCOUNTS[1]);
+    let emeraldBalance = await emerald.balanceOf.call(DEV_ACCOUNTS[1]);
+    if(emeraldBalance.toString() !== '0' && sapphireBalance.toString() !== '0') {
+      break;
+    }
+  }
 }
