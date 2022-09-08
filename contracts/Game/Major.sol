@@ -605,7 +605,7 @@ contract Major {
                     (uint16)(((((attribute) * (isMagic)) * 10) / 10 * lossRate) /
                     10);
                 mdef =
-                    (uint16)(((((attribute) * (isMagic)) * 10) * (1 - _part)) /
+                    (uint16)(((((attribute) * (isMagic)) * 10) * (10 - _part)) /
                     10);
                 cri = (uint16)(((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001);
             }

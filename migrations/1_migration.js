@@ -26,24 +26,25 @@ module.exports = async function(deployer, nil, accounts) {
   const sapphire = await SAPPHIRE.deployed();
   const emerald = await EMERALD.deployed();
 
-  nft.setSpecificContract(MAJOR.address, {from:accounts[0]})
-  currency.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
-  ruby.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
-  sapphire.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
-  emerald.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  await nft.setSpecificContract(MAJOR.address, {from:accounts[0]})
+  await currency.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  await ruby.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  await sapphire.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
+  await emerald.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
   
-  DEV_ACCOUNTS.forEach(async (devAccount) => {
-    currency.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-    ruby.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-    sapphire.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-    emerald.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-  })
+  //for deploy
+  // DEV_ACCOUNTS.forEach(async (devAccount) => {
+  //   currency.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  //   ruby.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  //   sapphire.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  //   emerald.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  // })
 
-  while(true) {
-    let sapphireBalance = await sapphire.balanceOf.call(DEV_ACCOUNTS[1]);
-    let emeraldBalance = await emerald.balanceOf.call(DEV_ACCOUNTS[1]);
-    if(emeraldBalance.toString() !== '0' && sapphireBalance.toString() !== '0') {
-      break;
-    }
-  }
+  // while(true) {
+  //   let sapphireBalance = await sapphire.balanceOf.call(DEV_ACCOUNTS[1]);
+  //   let emeraldBalance = await emerald.balanceOf.call(DEV_ACCOUNTS[1]);
+  //   if(emeraldBalance.toString() !== '0' && sapphireBalance.toString() !== '0') {
+  //     break;
+  //   }
+  // }
 }

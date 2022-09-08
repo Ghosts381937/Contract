@@ -9,7 +9,7 @@ const EMERALD = artifacts.require("Emerald");
 const COUNT_OF_DUNGEON_INFO = 4;
 const COUNT_OF_DROPS_INFO = 3;
 const COUNT_OF_PLAYER_STATUS = 5;
-const INITIAL_BALANCE_OF_MAJOR = '5000';
+const INITIAL_BALANCE_OF_MAJOR = '1000000';
 
 let key = false;
 
@@ -64,7 +64,7 @@ contract("CURRENCY", (accounts) => {
     const currency = await CURRENCY.deployed();
     const balance = await currency.balanceOf.call(MAJOR.address);
 
-    assert.equal(balance.valueOf(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
+    assert.equal(balance.toString(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
   });
 });
 contract("RUBY", (accounts) => {
@@ -73,7 +73,7 @@ contract("RUBY", (accounts) => {
     const ruby = await RUBY.deployed();
     const balance = await ruby.balanceOf.call(MAJOR.address);
 
-    assert.equal(balance.valueOf(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
+    assert.equal(balance.toString(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
   });
 });
 contract("SAPPHIRE", (accounts) => {
@@ -82,7 +82,7 @@ contract("SAPPHIRE", (accounts) => {
     const sapphire = await SAPPHIRE.deployed();
     const balance = await sapphire.balanceOf.call(MAJOR.address);
 
-    assert.equal(balance.valueOf(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
+    assert.equal(balance.toString(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "5000 wasn't in the first account");
   });
 });
 contract("EMERALD", (accounts) => {
@@ -91,7 +91,7 @@ contract("EMERALD", (accounts) => {
     const emerald = await EMERALD.deployed();
     const balance = await emerald.balanceOf.call(MAJOR.address);
 
-    assert.equal(balance.valueOf(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "10000 wasn't in the first account");
+    assert.equal(balance.toString(), web3.utils.toWei(INITIAL_BALANCE_OF_MAJOR, 'ether'), "10000 wasn't in the first account");
   });
 });
 contract("NFT", () => {
@@ -278,19 +278,19 @@ contract("MAJOR", (accounts) => {
         emerald: 100
       },
       {
-        part: getRandomInt(4),
-        ruby: 50,
-        sapphire: 200,
-        emerald: 150
-      },
-      {
-        part: getRandomInt(4),
+        part: 2,
         ruby: 200,
         sapphire: 200,
-        emerald: 199
+        emerald: 200
       },
       {
-        part: getRandomInt(4),
+        part: 3,
+        ruby: 200,
+        sapphire: 200,
+        emerald: 200
+      },
+      {
+        part: 4,
         ruby: 200,
         sapphire: 200,
         emerald: 200
@@ -298,7 +298,7 @@ contract("MAJOR", (accounts) => {
     ];
     for(let i = 0; i < amountsForForge.length; i++) {
       amount = amountsForForge[i];
-      await major.forge(0, amount.ruby, amount.sapphire, amount.emerald, {from: accounts[0]});
+      await major.forge(amount.part, amount.ruby, amount.sapphire, amount.emerald, {from: accounts[0]});
     }
     let expectedBalance = amountsForForge.length;
     let actualBalance = await nft.balanceOf.call(accounts[0]);
