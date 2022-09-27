@@ -441,11 +441,11 @@ contract Major {
 
     function equip(uint256 _helmet, uint256 _chestplate, uint256 _leggings, uint256 _boots, uint256 _weapon) external {
         require(
-            NFT.ownerOf(_helmet) == msg.sender &&
-            NFT.ownerOf(_chestplate) == msg.sender &&
-            NFT.ownerOf(_leggings) == msg.sender &&
-            NFT.ownerOf(_boots) == msg.sender &&
-            NFT.ownerOf(_weapon) == msg.sender
+            (NFT.ownerOf(_helmet) == msg.sender || _helmet == 0) &&
+            (NFT.ownerOf(_chestplate) == msg.sender || _chestplate == 0) &&
+            (NFT.ownerOf(_leggings) == msg.sender || _leggings == 0) &&
+            (NFT.ownerOf(_boots) == msg.sender || _boots == 0) &&
+            (NFT.ownerOf(_weapon) == msg.sender || _weapon == 0)
             , "You are not the owner.");
 
         Equipment memory newEquipment = Equipment(_helmet, _chestplate, _leggings, _boots, _weapon);
