@@ -89,13 +89,14 @@ contract Nft is ERC721Enumerable, ERC721URIStorage, ERC721Burnable {
         return "";
     }
 
-    function createNFT(address _player, uint8 _rarity, uint8 _part, uint8 _level, uint16 _atk, uint16 _matk, uint16 _def, uint16 _mdef, uint16 _cri, uint16 _criDmgRatio, uint8[3] memory _skills) external onlySpecificContract returns(uint) {
+    function createNFT(address _player, string memory _tokenURI) external returns(uint) {
         _tokenIds.increment();
 
         uint256 _newItemId = _tokenIds.current();
         _mint(_player, _newItemId);
-        Attribute memory _attribute = Attribute(_atk, _matk, _def, _mdef, _cri, _criDmgRatio);
-        _setTokenStat(_rarity, _part, _level, _attribute, _skills, _newItemId);
+        _setTokenURI(_newItemId, _tokenURI);
+        // Attribute memory _attribute = Attribute(_atk, _matk, _def, _mdef, _cri, _criDmgRatio);
+        // _setTokenStat(_rarity, _part, _level, _attribute, _skills, _newItemId);
         return _newItemId;
     }
 

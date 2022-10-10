@@ -16,22 +16,16 @@ interface ERC20 {
 
 interface ERC721 {
     function createNFT(
-        address _player,
-        uint8 _rarity,
-        uint8 _part,
-        uint8 _level,
-        uint16 _atk,
-        uint16 _matk,
-        uint16 _def,
-        uint16 _mdef,
-        uint16 _cri,
-        uint16 _criDmgRatio,
-        uint8[3] memory _skills
+        address _player, string memory _tokenURI
     ) external returns (uint256);
 
     function ownerOf(uint256 tokenId) external returns (address);
 
     function burn(uint256 tokenId) external;
+}
+
+interface TokenURI {
+    function get(uint part, uint index) external returns(string memory tokenURI);
 }
 
 /**
@@ -46,6 +40,7 @@ contract Major {
     ERC20 SAPPHIRE;
     ERC20 EMERALD;
     ERC721 NFT;
+    TokenURI tokenURI;
     uint256 TOKEN_DECIMAL = 1e18;
     uint256 PROBABILITY_OF_C = 55 * 20; //55%
     uint256 PROBABILITY_OF_U = 30 * 20; //30%
@@ -103,16 +98,6 @@ contract Major {
     struct MaterialInfo {
         uint256 baseOfAbility;
     }
-    struct NFTInfo {
-        uint8 rarity;
-        uint16 atk;
-        uint16 matk;
-        uint16 def;
-        uint16 mdef;
-        uint16 cri;
-        uint8 criDmgRatio;
-        uint8[3] skills;
-    }
 
     mapping(address => bool) private isInit;
     mapping(address => Ability) private ability;
@@ -130,13 +115,15 @@ contract Major {
         address _nft,
         address _ruby,
         address _sapphire,
-        address _emerald
+        address _emerald,
+        address _tokenURI
     ) {
         TOKEN = ERC20(_token);
         NFT = ERC721(_nft);
         RUBY = ERC20(_ruby);
         SAPPHIRE = ERC20(_sapphire);
         EMERALD = ERC20(_emerald);
+        tokenURI = TokenURI(_tokenURI);
         owner = msg.sender;
         timestamp = block.timestamp;
     }
@@ -346,7 +333,7 @@ contract Major {
         uint16 _amountOfRuby,
         uint16 _amountOfSapphire,
         uint16 _amountOfEmerald
-    ) external returns (uint256) {
+    ) external {
         require(_amountOfRuby <= 200, "Too Many Ruby");
         require(_amountOfSapphire <= 200, "Too Many Sapphire");
         require(_amountOfEmerald <= 200, "Too Many Emerald");
@@ -355,8 +342,7 @@ contract Major {
         uint256 sumOfAmount = _amountOfRuby +
             _amountOfSapphire +
             _amountOfEmerald;
-        require(sumOfAmount >= 300, "Not Enough Materials");
-        require(sumOfAmount <= 600, "Too Many Materials");
+        require(sumOfAmount >= 50, "Not Enough Materials");
 
         //Transfer the materials
         uint256 tokenDecimal = TOKEN_DECIMAL;
@@ -376,44 +362,13 @@ contract Major {
             _amountOfEmerald * tokenDecimal
         );
 
-        //Parameter for createNFT()
-        NFTInfo memory nftInfo;
+        //determine the attribute of a nft.
+        uint256 randomNumber = _random(seed) % 2000 + 1;
+        uint rarity = _rollRarity(sumOfAmount, randomNumber);
+        string memory tokenURI_;
+        tokenURI_ = tokenURI.get(_part, rarity + randomNumber % 2);
 
-        uint256 randomNumber = (_random(seed) % 2000) + 1;
-
-        //Determine the nftInfo
-        nftInfo.rarity = _rollRarity(sumOfAmount, randomNumber);
-        nftInfo.skills = _rollSkills(nftInfo.rarity, randomNumber);
-        (
-            nftInfo.atk,
-            nftInfo.def,
-            nftInfo.matk,
-            nftInfo.mdef,
-            nftInfo.cri,
-            nftInfo.criDmgRatio
-        ) = _rollAttribute(
-            randomNumber,
-            _amountOfRuby,
-            _amountOfSapphire,
-            _amountOfEmerald,
-            nftInfo.rarity,
-            _part
-        );
-
-        uint256 tokenId = NFT.createNFT(
-            msg.sender,
-            nftInfo.rarity,
-            _part,
-            INITIAL_LEVEL,
-            nftInfo.atk,
-            nftInfo.matk,
-            nftInfo.def,
-            nftInfo.mdef,
-            nftInfo.cri,
-            nftInfo.criDmgRatio,
-            nftInfo.skills
-        );
-        return tokenId;
+        NFT.createNFT(msg.sender,tokenURI_);
     }
 
     function distributeAbility(uint256 _str,uint256 _intllegence,uint256 _dex,uint256 _vit,uint256 _luk) external {
@@ -503,144 +458,11 @@ contract Major {
         if (randomNumber <= probabilityOfC) {
             rarity = 0;
         } else if (randomNumber <= probabilityOfC + probabilityOfU) {
-            rarity = 1;
-        } else if (randomNumber <= probabilityOfC + probabilityOfU + probabilityOfR) {
             rarity = 2;
+        } else if (randomNumber <= probabilityOfC + probabilityOfU + probabilityOfR) {
+            rarity = 4;
         } else if (randomNumber <= probabilityOfC + probabilityOfU + probabilityOfR + probabilityOfL) {
-            rarity = 3;
-        }
-    }
-
-    function _rollSkills(uint8 rarity, uint256 randomNumber)
-        internal
-        view
-        returns (uint8[3] memory skills)
-    {
-        uint8 totalCombanationOfSkillOnU = TOTAL_COMBINATION_OF_SKILL_ON_U;
-        uint8 totalCombanationOfSkillOnR = TOTAL_COMBINATION_OF_SKILL_ON_R;
-        uint8 totalCombanationOfSkillOnL = TOTAL_COMBINATION_OF_SKILL_ON_L;
-        if (rarity == 1) {
-            skills[0] = uint8((randomNumber % totalCombanationOfSkillOnU) + 1);
-            //[1], [2]
-        } else if (rarity == 2) {
-            skills[0] = uint8(
-                (randomNumber % totalCombanationOfSkillOnR) +
-                    totalCombanationOfSkillOnU +
-                    1
-            );
-            skills[1] = skills[0] + totalCombanationOfSkillOnR;
-            //[3, 5], [4, 6]
-        } else if (rarity == 3) {
-            skills[0] = uint8(
-                (randomNumber % totalCombanationOfSkillOnL) +
-                    totalCombanationOfSkillOnU +
-                    totalCombanationOfSkillOnR *
-                    2 +
-                    1
-            );
-            skills[1] = skills[0] + totalCombanationOfSkillOnL;
-            skills[2] = skills[1] + totalCombanationOfSkillOnL;
-            //[7, 9, 11], [8, 10, 12]
-        }
-    }
-
-    function _rollAttribute(
-        uint256 randomNumber,
-        uint16 _amountOfRuby,
-        uint16 _amountOfSapphire,
-        uint16 _amountOfEmerald,
-        uint8 rarity,
-        uint8 _part
-    )
-        internal
-        view
-        returns (
-            uint16 atk,
-            uint16 def,
-            uint16 matk,
-            uint16 mdef,
-            uint16 cri,
-            uint8 criDmgRatio
-        )
-    {
-        //Determine the attribute
-        //Max is 400 witch refers to 0% probability to forge a magical weapon.
-        uint8 isMagic;
-        {
-            isMagic = ((randomNumber % 400) + 1) >
-                (200 - _amountOfSapphire + _amountOfRuby)
-                ? 1
-                : 0;
-        }
-        uint8 lossRate;
-        {
-            lossRate = LOSS_RATE;
-        }
-
-        uint32 attribute;
-        {
-            attribute = _calculateAttribute(randomNumber, rarity);
-        }
-
-        {
-            if (_part == 0) {
-                //weapon
-                atk = (uint16)(attribute * (isMagic ^ 1));
-                def =
-                    (uint16)((((attribute) * (isMagic ^ 1) * 10) / 10 * lossRate) /
-                    10);
-                matk = (uint16)((attribute) * (isMagic));
-                mdef = (uint16)((((attribute) * (isMagic) * 10) / 10 * lossRate) / 10);
-                cri = (uint16)(((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001);
-            } else if (_part > 0) {
-                //equipment
-                atk =
-                    (uint16)(((((attribute) * (isMagic ^ 1)) * 10) / 10 * lossRate) /
-                    10);
-                def =
-                    (uint16)(((((attribute) * (isMagic ^ 1)) * 10) *
-                        (10 - _part)) /
-                    10);
-                matk =
-                    (uint16)(((((attribute) * (isMagic)) * 10) / 10 * lossRate) /
-                    10);
-                mdef =
-                    (uint16)(((((attribute) * (isMagic)) * 10) * (10 - _part)) /
-                    10);
-                cri = (uint16)(((attribute * 10) / 5 / 10 + _amountOfEmerald * 5) % 2001);
-            }
-        }
-        //Determine the criDmgRatio
-        if (rarity >= 2) {
-            criDmgRatio = _rollCriDmgRatio(randomNumber, _amountOfEmerald);
-        }
-    }
-
-    function _calculateAttribute(uint256 randomNumber, uint8 rarity)
-        internal
-        view
-        returns (uint16 attribute)
-    {
-        attribute = uint16(
-            ((randomNumber + 3000) % MAX_OFFEST_OF_ATTRIBUTE[rarity]) +
-                MIN_ATTRIBUTE[rarity]
-        );
-    }
-
-    function _rollCriDmgRatio(uint256 randomNumber, uint16 _amountOfEmerald)
-        internal
-        view
-        returns (uint8 criDmgRatio)
-    {
-        uint8[4] memory probabilityOfCriDmgRatio = PROBABILITY_OF_CRI_DMG_RATIO;
-        randomNumber = (randomNumber % 80 + 1) + (_amountOfEmerald / 10);
-        uint16 probability;
-        for (uint8 i = 0; i < 4; i++) {
-            probability += probabilityOfCriDmgRatio[i];
-            if (randomNumber <= probability) {
-                criDmgRatio = uint8((randomNumber % MAX_CRI_DMG_RATIO[i]) + 1);
-                break;
-            }
+            rarity = 6;
         }
     }
 
