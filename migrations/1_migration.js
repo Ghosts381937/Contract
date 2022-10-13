@@ -10,6 +10,42 @@ const DEV_ACCOUNTS = ['0x23FdC87bEeC6da70cFD285eD947550fcA69a6e38', '0xbdAba61A2
 const TOTAL_SUPPLY = new web3.utils.BN('10000000000000000000000000')
 const AMOUNT_TO_MAJOR = TOTAL_SUPPLY.div(new web3.utils.BN('10')) //0.1 * TOTAL_SUPPLY
 const AMOUNT_TO_DEV = AMOUNT_TO_MAJOR.mul(new web3.utils.BN('4')) //0.3 * TOTAL_SUPPLY
+let drops = [{
+    exp: 10, 
+    typesOfMaterial: [RUBY.address], 
+    basesOfMaterial: [web3.utils.toWei('10', 'ether')]
+  },{
+    exp: 20, 
+    typesOfMaterial: [RUBY.address, SAPPHIRE.address], 
+    basesOfMaterial: [web3.utils.toWei('10', 'ether'), web3.utils.toWei('10', 'ether')]
+  },{
+    exp: 40, 
+    typesOfMaterial: [RUBY.address, SAPPHIRE.address, EMERALD.address], 
+    basesOfMaterial: [web3.utils.toWei('10', 'ether'), web3.utils.toWei('10', 'ether'), web3.utils.toWei('10', 'ether')]
+  },{
+    exp: 60, 
+    typesOfMaterial: [RUBY.address, SAPPHIRE.address, EMERALD.address], 
+    basesOfMaterial: [web3.utils.toWei('20', 'ether'), web3.utils.toWei('20', 'ether'), web3.utils.toWei('20', 'ether')]
+  },{
+    exp: 100, 
+    typesOfMaterial: [RUBY.address, SAPPHIRE.address, EMERALD.address], 
+    basesOfMaterial: [web3.utils.toWei('100', 'ether'), web3.utils.toWei('100', 'ether'), web3.utils.toWei('100', 'ether')]
+  },
+];
+let dungeons = [{
+    cost: web3.utils.toWei('100', 'ether'), 
+    numbersOfOriginEnemy: [], 
+    numbersOfEnemyOnSingleDungeon: []
+  },{
+    cost: web3.utils.toWei('200', 'ether'), 
+    numbersOfOriginEnemy: [], 
+    numbersOfEnemyOnSingleDungeon: []
+  },{
+    cost: web3.utils.toWei('1000', 'ether'), 
+    numbersOfOriginEnemy: [], 
+    numbersOfEnemyOnSingleDungeon: []
+  },
+];
 module.exports = async function(deployer, nil, accounts) {
   // deployment steps
   await deployer.deploy(RUBY)
@@ -18,13 +54,14 @@ module.exports = async function(deployer, nil, accounts) {
   await deployer.deploy(NFT)
   await deployer.deploy(CURRENCY)
   await deployer.deploy(MARKET, CURRENCY.address, NFT.address)
-  await deployer.deploy(MAJOR, CURRENCY.address, NFT.address, RUBY.address, SAPPHIRE.address, EMERALD.address)
+  await deployer.deploy(MAJOR, CURRENCY.address, NFT.address, RUBY.address, SAPPHIRE.address, EMERALD.address, "0x033b54D48a7d94071fEdf36604C9F82B6c847640")
   
   const nft = await NFT.deployed();
   const currency = await CURRENCY.deployed();
   const ruby = await RUBY.deployed();
   const sapphire = await SAPPHIRE.deployed();
   const emerald = await EMERALD.deployed();
+  const major = await MAJOR.deployed();
 
   await nft.setSpecificContract(MAJOR.address, {from:accounts[0]})
   await currency.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
@@ -33,18 +70,28 @@ module.exports = async function(deployer, nil, accounts) {
   await emerald.transfer(MAJOR.address, AMOUNT_TO_MAJOR, {from:accounts[0]})
   
   //for deploy
-  // DEV_ACCOUNTS.forEach(async (devAccount) => {
-  //   currency.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-  //   ruby.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-  //   sapphire.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-  //   emerald.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
-  // })
+  DEV_ACCOUNTS.forEach(async (devAccount) => {
+    currency.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    ruby.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    sapphire.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+    emerald.transfer(devAccount, AMOUNT_TO_DEV, {from:accounts[0]})
+  })
 
-  // while(true) {
-  //   let sapphireBalance = await sapphire.balanceOf.call(DEV_ACCOUNTS[1]);
-  //   let emeraldBalance = await emerald.balanceOf.call(DEV_ACCOUNTS[1]);
-  //   if(emeraldBalance.toString() !== '0' && sapphireBalance.toString() !== '0') {
-  //     break;
-  //   }
-  // }
+  for(let index = 0; index < dungeons.length; index++) {
+    let dungeon = dungeons[index];
+    await major.createDungeon(dungeon.cost, dungeon.numbersOfOriginEnemy, dungeon.numbersOfEnemyOnSingleDungeon, {from:accounts[0]});
+  }
+
+  for(let index = 0; index < drops.length; index++) {
+    let drop = drops[index];
+    await major.createDropsInfo(drop.exp, drop.typesOfMaterial, drop.basesOfMaterial, {from:accounts[0]});
+  }
+
+  while(true) {
+    let sapphireBalance = await sapphire.balanceOf.call(DEV_ACCOUNTS[1]);
+    let emeraldBalance = await emerald.balanceOf.call(DEV_ACCOUNTS[1]);
+    if(emeraldBalance.toString() !== '0' && sapphireBalance.toString() !== '0') {
+      break;
+    }
+  }
 }
