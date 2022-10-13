@@ -22,6 +22,8 @@ interface ERC721 {
     function ownerOf(uint256 tokenId) external returns (address);
 
     function burn(uint256 tokenId) external;
+
+    function setEquipedTag(uint tokenId, bool value)  external;
 }
 
 interface TokenURI {
@@ -129,7 +131,6 @@ contract Major {
     }
 
     event Equip(Equipment indexed oldEquipment, Equipment indexed newEquipment);
-    event Test(uint a, uint b);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Permission denied.");
@@ -402,7 +403,20 @@ contract Major {
             (_boots == 0 || NFT.ownerOf(_boots) == msg.sender) &&
             (_weapon ==0 || NFT.ownerOf(_weapon) == msg.sender)
             , "You are not the owner.");
+        //taking off the old one.
+        Equipment memory oldEquipment = equipment[msg.sender];
+        NFT.setEquipedTag(oldEquipment.helmet, false);
+        NFT.setEquipedTag(oldEquipment.chestplate, false);
+        NFT.setEquipedTag(oldEquipment.leggings, false);
+        NFT.setEquipedTag(oldEquipment.boots, false);
+        NFT.setEquipedTag(oldEquipment.weapon, false);
 
+        //equip the new one.
+        NFT.setEquipedTag(_helmet, true);
+        NFT.setEquipedTag(_chestplate, true);
+        NFT.setEquipedTag(_leggings, true);
+        NFT.setEquipedTag(_boots, true);
+        NFT.setEquipedTag(_weapon, true);
         Equipment memory newEquipment = Equipment(_helmet, _chestplate, _leggings, _boots, _weapon);
         _updateEquipment(newEquipment);
         emit Equip(equipment[msg.sender], newEquipment);
@@ -494,7 +508,6 @@ contract Major {
         level = newLevel;
         playerStatus_.experience = exp;
         playerStatus_.level = level;
-        emit Test(exp, _getExp);
 
         _updatePlayerStatus(playerStatus_);
 
