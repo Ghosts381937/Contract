@@ -229,7 +229,7 @@ contract Major {
         _updateAbility(Ability(10, 10, 10, 10, 10));
 
         //test statement
-        _updateEquipment(Equipment(1, 2, 3, 4, 10));
+        _updateEquipment(Equipment(0, 0, 0, 0, 0));
     }
 
     function enterDungeon(uint256 _indexOfDungeon) external {
