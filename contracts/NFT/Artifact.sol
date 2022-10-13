@@ -15,7 +15,7 @@ contract Nft is ERC721Enumerable, ERC721URIStorage, ERC721Burnable {
     address public specificContract;
     Counters.Counter private _tokenIds;
     address public owner;
-    mapping(uint => bool) private equipedTag;
+    mapping(uint => bool) private equipedTag;//it must be false when transferring  
 
     constructor() ERC721(NAME, SYMBOL) { 
         owner = msg.sender;
@@ -71,6 +71,7 @@ contract Nft is ERC721Enumerable, ERC721URIStorage, ERC721Burnable {
         uint256 _newItemId = _tokenIds.current();
         _mint(_player, _newItemId);
         _setTokenURI(_newItemId, _tokenURI);
+        setEquipedTag(_newItemId, false);
         // Attribute memory _attribute = Attribute(_atk, _matk, _def, _mdef, _cri, _criDmgRatio);
         // _setTokenStat(_rarity, _part, _level, _attribute, _skills, _newItemId);
         return _newItemId;
@@ -80,9 +81,7 @@ contract Nft is ERC721Enumerable, ERC721URIStorage, ERC721Burnable {
         specificContract = _contract;
     }
 
-    function setEquipedTag(uint tokenId, bool value) onlySpecificContract external {
+    function setEquipedTag(uint tokenId, bool value) onlySpecificContract public {
         equipedTag[tokenId] = value;
     }
-
-
 }
