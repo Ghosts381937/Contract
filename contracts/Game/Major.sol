@@ -88,8 +88,8 @@ contract Major {
     }
     struct Dungeon {
         uint256 cost;
-        uint8[] numbersOfRemaingEnemy;
-        uint8[] numbersOfOriginEnemy;
+        uint16[] numbersOfRemaingEnemy;
+        uint16[] numbersOfOriginEnemy;
         uint8[] numbersOfEnemyOnSingleDungeon;
     }
     struct DropsInfo {
@@ -203,8 +203,8 @@ contract Major {
         view
         returns (
             uint256 cost,
-            uint8[] memory numbersOfRemaingEnemy,
-            uint8[] memory numbersOfOriginEnemy,
+            uint16[] memory numbersOfRemaingEnemy,
+            uint16[] memory numbersOfOriginEnemy,
             uint8[] memory numbersOfEnemyOnSingleDungeon
         )
     {
@@ -301,13 +301,14 @@ contract Major {
                     );
                 ERC20(_dropsInfo.typesOfMaterial[j]).transfer(msg.sender, finalAmount);
             }
+            TOKEN.transfer(msg.sender, _dropsInfo.exp * _drops[i]);
             _gainExp(_dropsInfo.exp * _drops[i]);
         }
     }
 
     function createDungeon(
         uint256 _cost,
-        uint8[] memory _numbersOfOriginEnemy,
+        uint16[] memory _numbersOfOriginEnemy,
         uint8[] memory _numbersOfEnemyOnSingleDungeon
     ) external onlyOwner {
         dungeon.push(
@@ -403,7 +404,7 @@ contract Major {
             (_boots == 0 || NFT.ownerOf(_boots) == msg.sender) &&
             (_weapon ==0 || NFT.ownerOf(_weapon) == msg.sender)
             , "You are not the owner.");
-        //taking off the old one.
+        //release the old one.
         Equipment memory oldEquipment = equipment[msg.sender];
         NFT.setEquipedTag(oldEquipment.helmet, false);
         NFT.setEquipedTag(oldEquipment.chestplate, false);
@@ -411,7 +412,7 @@ contract Major {
         NFT.setEquipedTag(oldEquipment.boots, false);
         NFT.setEquipedTag(oldEquipment.weapon, false);
 
-        //equip the new one.
+        //lock the new one.
         NFT.setEquipedTag(_helmet, true);
         NFT.setEquipedTag(_chestplate, true);
         NFT.setEquipedTag(_leggings, true);
